@@ -165,7 +165,7 @@ class DocsTests(unittest.TestCase):
         self.assertIn("نطاق للمتاجر | Nitaaq Store", readme)
         arabic = len(re.findall("[؀-ۿ]", readme))
         self.assertGreater(arabic, 1500)
-        for doc in ("التثبيت.md", "أوضاع-التشغيل.md", "القدرات-والتحقق.md", "القيود.md"):
+        for doc in ("install.md", "modes.md", "capabilities.md", "limitations.md"):
             self.assertTrue((_path.ROOT / "docs/ar" / doc).exists(), doc)
 
     def test_scope_exclusions_documented(self):

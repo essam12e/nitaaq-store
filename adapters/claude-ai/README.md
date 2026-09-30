@@ -6,4 +6,4 @@ core with only Agent Skills spec frontmatter fields (`name`, `description`,
 
 Upload it from the Skills area of claude.ai settings (Customize → Skills in
 current apps). Skills must be enabled for the account/organization, and the
-helpers need code execution to be available. See docs/ar/التثبيت.md.
+helpers need code execution to be available. See docs/ar/install.md.

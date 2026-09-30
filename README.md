@@ -70,7 +70,7 @@
 - اتصال **شركاء سلة** (Salla Partners MCP) مخصص لتطبيقات الشركاء، ولا يعطي وصولاً لمنتجاتك أو طلباتك أو مخزونك أو تقاريرك.
 - كل عملية لها مستوى إثبات: مكتشفة ← متحقق من مخططها ← مختبرة ← متحقق منها على متجر حي. الاختبارات الوهمية لا تجعل أي عملية «متحقق منها على متجر حي».
 
-التفاصيل: [docs/ar/القدرات-والتحقق.md](docs/ar/القدرات-والتحقق.md)
+التفاصيل: [docs/ar/capabilities.md](docs/ar/capabilities.md)
 
 ---
 
@@ -96,7 +96,7 @@ cd nitaaq-store
 
 **claude.ai:** شغّل `python3 tools/build.py` ثم ارفع `dist/claude-ai/nitaaq-store.zip` من قسم المهارات (Skills) في إعدادات claude.ai. رابط المستودع وحده لا يثبّت المهارة هناك.
 
-الدليل الكامل: [docs/ar/التثبيت.md](docs/ar/التثبيت.md)
+الدليل الكامل: [docs/ar/install.md](docs/ar/install.md)
 
 ---
 
@@ -165,8 +165,8 @@ python3 skill/nitaaq-store/scripts/nitaaq_cli.py --help
 
 ## وثائق أخرى
 
-- [التثبيت](docs/ar/التثبيت.md)
-- [أوضاع التشغيل](docs/ar/أوضاع-التشغيل.md)
-- [القدرات والتحقق](docs/ar/القدرات-والتحقق.md)
-- [القيود المعروفة](docs/ar/القيود.md)
+- [التثبيت](docs/ar/install.md)
+- [أوضاع التشغيل](docs/ar/modes.md)
+- [القدرات والتحقق](docs/ar/capabilities.md)
+- [القيود المعروفة](docs/ar/limitations.md)
 - [سجل التغييرات](CHANGELOG.md)
