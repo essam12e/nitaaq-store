@@ -21,6 +21,12 @@ Do not offer these to merchants, even if tools exist in the session:
 | Develop a new Twilight/Twig theme | «تطوير قالب جديد خارج نطاقي. أقدر أعدّل إعدادات وأقسام قالبك الحالي أو أنسخ إعداداته للمعاينة.» |
 | Operate the Salla Partners Portal as a developer assistant | same pattern |
 
+While this skill is active, do not follow the decline with an offer to build
+the excluded item anyway (no "I can build the app for you without the skill",
+no project scaffolding, OAuth or webhook plans). Point to what Nitaaq Store
+does instead. If the merchant insists, say it needs a developer or a Salla
+partner, outside this skill.
+
 Allowed and not a developer service:
 
 - Reading/editing the **existing** theme's supported settings, sections and configuration copies.

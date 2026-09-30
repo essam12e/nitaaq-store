@@ -17,7 +17,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from nitaaq import __version__  # noqa: E402
-from nitaaq import activation, capabilities, errors, exports, geo, products, redact, reports, seo_audit, tracking, visibility, writes  # noqa: E402
+from nitaaq import activation, capabilities, errors, exports, geo, gsc, products, redact, remediation, reports, seo_audit, tracking, visibility, writes  # noqa: E402
 
 
 def _out(obj):
@@ -213,6 +213,30 @@ def cmd_redact(a):
         print(redact.redact_text(data))
 
 
+def cmd_gsc_perf(a):
+    brands = [x.strip() for x in (a.brand or "").split(",") if x.strip()]
+    _out(gsc.analyze_performance(a.file, brands, a.min_impressions))
+
+
+def cmd_gsc_index(a):
+    _out(gsc.analyze_indexing(a.file))
+
+
+def cmd_remediation(a):
+    crawl = _load(a.crawl)
+    cmap = _load(a.capabilities) if a.capabilities else None
+    p = remediation.plan(crawl.get("findings", []), cmap)
+    if a.md:
+        print(remediation.plan_markdown_ar(p))
+    else:
+        _out(p)
+
+
+def cmd_recheck(a):
+    before, after = _load(a.before), _load(a.after)
+    _out(remediation.recheck(before.get("findings", []), after.get("findings", []), after.get("reachable", True)))
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(prog="nitaaq_cli", description="Nitaaq Store helpers")
     p.add_argument("--version", action="version", version=__version__)
@@ -257,6 +281,11 @@ def main(argv=None):
     s.add_argument("--products"); s.add_argument("--cities"); s.add_argument("--competitors"); s.add_argument("--aliases"); s.set_defaults(f=cmd_vis_queries)
     s = sub.add_parser("visibility-summary"); s.add_argument("observations"); s.set_defaults(f=cmd_vis_summary)
     s = sub.add_parser("redact"); s.add_argument("file"); s.set_defaults(f=cmd_redact)
+    s = sub.add_parser("gsc-performance"); s.add_argument("file"); s.add_argument("--brand", help="كلمات العلامة مفصولة بفواصل")
+    s.add_argument("--min-impressions", type=int, default=50); s.set_defaults(f=cmd_gsc_perf)
+    s = sub.add_parser("gsc-indexing"); s.add_argument("file"); s.set_defaults(f=cmd_gsc_index)
+    s = sub.add_parser("remediation-plan"); s.add_argument("--crawl", required=True); s.add_argument("--capabilities"); s.add_argument("--md", action="store_true"); s.set_defaults(f=cmd_remediation)
+    s = sub.add_parser("recheck"); s.add_argument("--before", required=True); s.add_argument("--after", required=True); s.set_defaults(f=cmd_recheck)
 
     a = p.parse_args(argv)
     try:

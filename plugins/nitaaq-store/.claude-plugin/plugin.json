@@ -1,0 +1,9 @@
+{
+  "name": "nitaaq-store",
+  "version": "1.1.0",
+  "description": "نطاق للمتاجر | Nitaaq Store — تشغيل وتحسين وفحص متجرك الحالي في سلة بالعربي",
+  "author": { "name": "essam12e" },
+  "homepage": "https://github.com/essam12e/nitaaq-store",
+  "repository": "https://github.com/essam12e/nitaaq-store",
+  "keywords": ["salla", "ecommerce", "arabic", "seo", "geo", "saudi"]
+}

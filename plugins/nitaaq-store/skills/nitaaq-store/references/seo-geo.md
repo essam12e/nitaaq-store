@@ -30,6 +30,8 @@ Inspect:
 - Product/Offer structured data: name, image, offers.price, priceCurrency, availability; validity of JSON-LD.
 - Consistency: structured-data price/availability equals the visible price/availability (`price_mismatch` finding).
 - Search Console: indexing (Page indexing report), queries/pages performance — only from authorized access or exports; state the date range.
+  - Performance export (Queries.csv or Pages.csv, Arabic or English UI): `gsc-performance Queries.csv --brand "الريحان,rayhan"` → totals, low-CTR rows (title/description candidates), positions 4–15 with impressions (striking distance), zero-click rows, branded vs non-branded.
+  - Page indexing export (reasons table): `gsc-indexing reasons.csv` → reasons sorted by pages with Arabic advice. Some reasons are normal (redirects, correct canonicals); focus on important pages.
 
 Limits to state in every report:
 - «فحص الزحف العام لا يثبت حالة الفهرسة الفعلية في Google.»
@@ -81,6 +83,8 @@ Report honestly:
 - Record inaccuracies (wrong prices, old policies, wrong city) as remediation items: they usually trace to inconsistent public content.
 
 ## D. Remediation and re-check
+
+Helpers: `remediation-plan --crawl .nitaaq/crawl.json --capabilities .nitaaq/capabilities.json --md` groups findings, ranks them, names who can fix each one, and marks what is executable now through mapped tools. After fixes, crawl again to a new file and run `recheck --before crawl.json --after crawl2.json` (resolved / persisting / new; inconclusive if the site was unreachable).
 
 1. Prioritize by impact × effort: indexability blockers → duplicate/canonical issues → missing/weak titles & descriptions on key pages → product data consistency → content gaps (policies, category intros, FAQs) → images/alt → internal links.
 2. For each finding, name who can fix it: store tools (mode A), Salla dashboard, theme settings, an installed app, or Salla support. Platform-level items (e.g. how canonicals or JSON-LD are generated) may not be editable by the merchant; say so.

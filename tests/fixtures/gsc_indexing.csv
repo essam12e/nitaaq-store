@@ -1,0 +1,6 @@
+Reason,Source,Validation,Pages
+Page with redirect,Website,Not Started,12
+Duplicate without user-selected canonical,Website,Not Started,40
+Crawled - currently not indexed,Google systems,N/A,25
+Soft 404,Website,Not Started,3
+Not found (404),Website,Not Started,7

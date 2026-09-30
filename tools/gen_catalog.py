@@ -130,6 +130,6 @@ ops = [
 ]
 
 out = {"version": 1, "entity_keywords": E, "action_keywords": A, "operations": ops}
-p = Path(__file__).resolve().parents[1] / "skill/nitaaq-store/assets/operation-catalog.json"
+p = Path(__file__).resolve().parents[1] / "plugins/nitaaq-store/skills/nitaaq-store/assets/operation-catalog.json"
 p.write_text(json.dumps(out, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
 print(p, len(ops))

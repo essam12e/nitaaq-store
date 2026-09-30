@@ -76,14 +76,28 @@
 
 ## التثبيت السريع
 
+### Claude Code — كـ plugin (الأسهل)
+
+داخل Claude Code:
+
+```
+/plugin marketplace add essam12e/nitaaq-store
+/plugin install nitaaq-store@nitaaq
+```
+
+أو من الطرفية: `claude plugin marketplace add essam12e/nitaaq-store` ثم `claude plugin install nitaaq-store@nitaaq`.
+بهذه الطريقة يصير الأمر `/nitaaq-store:nitaaq-store` (أوامر الـplugin تأتي باسمه كبادئة)، وتوصلك التحديثات من المستودع.
+
+### Claude Code وCodex — بسكربت التثبيت
+
 يلزم Python 3.9 أو أحدث (بدون مكتبات إضافية).
 
 ```sh
-git clone <رابط المستودع> nitaaq-store
+git clone https://github.com/essam12e/nitaaq-store
 cd nitaaq-store
 ./install.sh                      # Claude Code وCodex لمستخدمك
-./install.sh --host claude-code   # Claude Code فقط
-./install.sh --host codex         # Codex فقط
+./install.sh --host claude-code   # Claude Code فقط (الأمر: /nitaaq-store)
+./install.sh --host codex         # Codex فقط (الأمر: $nitaaq-store)
 ./install.sh --scope project --project /path/to/project   # داخل مشروع
 ./install.sh --dry-run            # اعرض الخطة بدون تنفيذ
 ./install.sh --uninstall          # إزالة
@@ -94,7 +108,11 @@ cd nitaaq-store
 - لو فيه نسخة سابقة من نطاق للمتاجر يحفظها احتياطياً في `~/.nitaaq-store/backups/`.
 - لو فيه مجلد بنفس الاسم لمهارة أخرى يتوقف ولا يلمسه.
 
-**claude.ai:** شغّل `python3 tools/build.py` ثم ارفع `dist/claude-ai/nitaaq-store.zip` من قسم المهارات (Skills) في إعدادات claude.ai. رابط المستودع وحده لا يثبّت المهارة هناك.
+لا تثبّت الطريقتين معاً في Claude Code حتى لا تظهر المهارة مرتين.
+
+### claude.ai
+
+شغّل `python3 tools/build.py` ثم ارفع `dist/claude-ai/nitaaq-store.zip` من قسم المهارات (Skills) في إعدادات claude.ai. رابط المستودع وحده لا يثبّت المهارة هناك.
 
 الدليل الكامل: [docs/ar/install.md](docs/ar/install.md)
 
@@ -133,6 +151,8 @@ cd nitaaq-store
 3. **الظهور الفعلي في إجابات الذكاء الاصطناعي:** مجموعة أسئلة سعودية بالعربي (اسم المتجر، المنتجات، اكتشاف الفئة، المقارنات، الأسئلة المعلوماتية، المدن، الثقة والسياسات) وتسجيل النتائج كعينة، مع توضيح أن الإجابات تتغير.
 4. **المعالجة وإعادة الفحص:** إصلاح ما يمكن إصلاحه ضمن صلاحياتك والتحقق منه، وتحديد ما يحتاج لوحة التحكم أو دعم سلة.
 
+أدوات مرفقة لهذا القسم: فحص الصفحات العامة، تحليل ملفات Search Console (الأداء وأسباب عدم الفهرسة، بواجهة عربية أو إنجليزية)، خطة معالجة مرتبة حسب الأثر توضح من ينفّذ كل بند، ومقارنة قبل/بعد لإعادة الفحص.
+
 حدود نوضحها دائماً: الفحص العام لا يثبت حالة الفهرسة الفعلية، وبحث `site:` ليس إحصاءً للفهرس، وملف `llms.txt` اختياري ولا يضمن الظهور، ولا نعد بترتيب أو ظهور في أي منصة.
 
 ---
@@ -140,17 +160,22 @@ cd nitaaq-store
 ## هيكل المستودع
 
 ```
-skill/nitaaq-store/          النواة المشتركة (تقرأها كل البيئات)
-  SKILL.md                   التعليمات الرئيسية
-  references/                تفاصيل كل خدمة
-  scripts/nitaaq_cli.py      الأدوات المساعدة (Python، مكتبة قياسية)
-  scripts/nitaaq/            وحدات: القدرات، أمان الكتابة، المنتجات، التقارير، الفحص…
-  assets/operation-catalog.json   كتالوج العمليات الثابت
-adapters/                    إضافات رفيعة لكل بيئة (Claude Code، Codex، claude.ai)
-tools/build.py               التحقق وبناء الحزم في dist/
-tools/install.py             التثبيت الآمن
-tests/                       الاختبارات
-docs/ar/                     التوثيق العربي
+.claude-plugin/marketplace.json          سوق plugins لـ Claude Code (اسمه nitaaq)
+plugins/nitaaq-store/
+  .claude-plugin/plugin.json             تعريف الـplugin
+  skills/nitaaq-store/                   النواة المشتركة (تقرأها كل البيئات)
+    SKILL.md                             التعليمات الرئيسية
+    references/                          تفاصيل كل خدمة
+    scripts/nitaaq_cli.py                الأدوات المساعدة (Python، مكتبة قياسية)
+    scripts/nitaaq/                      القدرات، أمان الكتابة، المنتجات، التقارير، الفحص، Search Console، المعالجة…
+    assets/operation-catalog.json        كتالوج العمليات الثابت
+adapters/                                إضافات رفيعة لكل بيئة (Claude Code، Codex، claude.ai)
+tools/build.py                           التحقق وبناء الحزم في dist/
+tools/install.py                         التثبيت الآمن
+tools/run_evals.py                       تقييمات التفعيل والسلوك
+tests/                                   الاختبارات + خادم MCP تجريبي
+evals/                                   حالات التقييم ونتائجها
+docs/ar/                                 التوثيق العربي
 ```
 
 ## للمطورين
@@ -158,10 +183,19 @@ docs/ar/                     التوثيق العربي
 ```sh
 python3 tools/build.py                       # تحقق وبناء
 python3 -m unittest discover -s tests -v     # الاختبارات
-python3 skill/nitaaq-store/scripts/nitaaq_cli.py --help
+python3 tools/run_evals.py                   # تقييم التفعيل (بدون إنترنت)
+python3 tools/run_evals.py --live-claude     # تقييم السلوك في جلسات Claude Code حقيقية
+python3 plugins/nitaaq-store/skills/nitaaq-store/scripts/nitaaq_cli.py --help
 ```
 
-الاختبارات تستخدم بيانات وهمية وأدوات افتراضية، ولا تثبت عمل أي موصل حقيقي على متجر حي.
+## مستوى التحقق الحالي
+
+| ما تم التحقق منه | كيف |
+|---|---|
+| صيغة المهارة والـplugin والسوق | `claude plugin validate` نجح، وتم تثبيت الـplugin فعلياً بـ Claude Code 2.1.285 وظهرت المهارة |
+| سلوك المهارة داخل Claude Code | تقييمات حية (`--live-claude`) تشغّل Claude Code فعلياً مع المهارة وخادم MCP تجريبي؛ النتائج في `evals/results/` |
+| البروتوكول عبر MCP | اختبارات عبر اتصال MCP حقيقي (stdio) مع أعطال مصطنعة: تعارض، انقطاع أثناء الإنشاء، بيع أثناء التعبئة، صلاحيات، انتهاء الربط |
+| متجر سلة حي | **لم يتم.** الخادم التجريبي ليس سلة؛ لا توجد عملية «متحقق منها على متجر حي» |
 
 ## وثائق أخرى
 

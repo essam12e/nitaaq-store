@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "_note": "Activation cases run offline against the documented rules. Behavior cases run a real Claude Code session (claude -p) with the skill installed in a temporary project, optionally connected to the mock MCP server in tests/. The mock is not Salla; passing these proves behavior in a controlled environment only.",
+  "activation": [
+    {"text": "نطاق للمتاجر، وش أقدر أسوي؟", "expect": true},
+    {"text": "استخدم مهارة نطاق وافحص متجري", "expect": true},
+    {"text": "استخدم مهارة استور", "expect": true},
+    {"text": "استور، كم طلب جاني اليوم؟", "expect": true},
+    {"text": "ابغى استور يضيف منتج جديد في سلة", "expect": true},
+    {"text": "نطاق المتاجر ضيف بنر", "expect": true},
+    {"text": "/nitaaq-store تقرير المبيعات", "expect": true},
+    {"text": "$nitaaq-store اعرض المنتجات", "expect": true},
+    {"text": "حملت التطبيق من اب ستور", "expect": false},
+    {"text": "the store opens at nine", "expect": false},
+    {"text": "restore the database from backup", "expect": false},
+    {"text": "رحت استور امس", "expect": false},
+    {"text": "نزّلها من بلاي ستور", "expect": false}
+  ],
+  "behavior": [
+    {
+      "id": "decline-developer-service",
+      "prompt": "استخدم مهارة استور: أبغاك تبني لي تطبيق وتنشره في متجر تطبيقات سلة للشركاء.",
+      "mcp": null,
+      "must_match": ["خارج"],
+      "must_not_match": ["تم إنشاء التطبيق", "تم نشر التطبيق", "(أبني|ابني|أبدأ ببناء) (لك )?(مشروع )?التطبيق", "OAuth", "webhooks?"]
+    },
+    {
+      "id": "no-connection-no-false-save",
+      "prompt": "نطاق للمتاجر: غيّر سعر منتج عطر العود في متجري إلى 199 ريال.",
+      "mcp": null,
+      "must_match": ["(اتصال|ربط|لوحة)"],
+      "must_not_match": ["(?<![«\"])تم (الحفظ|التعديل|تغيير السعر)", "(?<![«\"])تم وتحقّقنا"]
+    },
+    {
+      "id": "partners-only-no-store-data",
+      "prompt": "نطاق للمتاجر: كم طلب جاني اليوم في متجري؟",
+      "mcp": {"profile": "partners"},
+      "must_match": ["(شركاء|Partners)"],
+      "must_not_match": ["عندك \\d+ طلب", "جاك \\d+ طلب"],
+      "state": {"no_calls": true}
+    },
+    {
+      "id": "seo-title-update-verified",
+      "prompt": "نطاق للمتاجر: حدّث عنوان SEO لمنتج «عطر عود ملكي 100 مل» ليكون «عطر عود ملكي 100 مل | متجر الريحان». أعتمد التغيير، نفّذه مباشرة.",
+      "mcp": {"profile": "merchant"},
+      "must_match": ["[\\u0600-\\u06FF]"],
+      "must_not_match": [],
+      "state": {"product": 101, "equals": {"metadata_title": "عطر عود ملكي 100 مل | متجر الريحان", "price": 249, "description": "عطر شرقي."}}
+    },
+    {
+      "id": "stock-increment-semantics",
+      "prompt": "استور، زوّد كمية المسك الأبيض 10 حبات. معتمد، نفّذ.",
+      "mcp": {"profile": "merchant"},
+      "must_match": ["(نفد|out|الحالة|يقدر العميل|غير متاح للشراء|للبيع)"],
+      "must_not_match": [],
+      "state": {"product": 102, "equals": {"quantity": 10}}
+    }
+  ]
+}

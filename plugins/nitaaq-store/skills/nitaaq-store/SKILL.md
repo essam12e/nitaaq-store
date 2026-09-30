@@ -1,11 +1,11 @@
 ---
 name: nitaaq-store
-description: "نطاق للمتاجر | Nitaaq Store — Arabic assistant that operates, improves and audits an EXISTING Salla store: products and inventory, store appearance and merchandising, orders and daily operations, reports and analysis, store audits, and deep SEO/GEO audit and remediation. Use when the user says «نطاق للمتاجر», «استخدم مهارة نطاق», «استخدم مهارة استور», «استور» (addressed to the assistant or about their store), /nitaaq-store or $nitaaq-store, or asks in Arabic to manage their Salla (سلة) store. Works with a Salla merchant MCP connection when one exists and in honest limited modes without it (public audit, merchant files, assisted browser). Not for building Salla apps, partner apps, marketplace apps, shipping integrations or new Twilight themes, and not for unrelated uses of the word store (App Store, storage)."
+description: "نطاق للمتاجر | Nitaaq Store — Arabic assistant that operates, improves and audits an EXISTING Salla store: products and inventory, store appearance and merchandising, orders and daily operations, reports and analysis, store audits, and deep SEO/GEO audit and remediation. Use when the user says «نطاق للمتاجر», «استخدم مهارة نطاق», «استخدم مهارة استور», «استور» (addressed to the assistant or about their store), /nitaaq-store or $nitaaq-store, or asks in Arabic to manage their Salla (سلة) store. Works with a Salla merchant MCP connection when one exists and in honest limited modes without it (public audit, merchant files, assisted browser). When invoked for developer services (building Salla, partner or marketplace apps, shipping integrations, new Twilight themes) it declines them and offers its store services instead. Not for unrelated uses of the word store (App Store, storage)."
 license: Proprietary. See LICENSE in the repository.
 compatibility: Agent Skills format, packaged for Claude Code, Codex and claude.ai skill upload. Helpers need Python 3.9+ (standard library only). Salla store actions need a merchant MCP connector or browser tools provided by the host.
 metadata:
   display-name: "نطاق للمتاجر | Nitaaq Store"
-  version: "1.0.0"
+  version: "1.1.0"
   language: "ar-SA"
 ---
 
@@ -77,7 +77,8 @@ Out of scope for merchants (decline politely in Arabic and offer what is in
 scope): building Salla apps, partner apps or marketplace apps; developer
 subscription plans; shipping-provider integrations as a service; developing
 new Twilight/Twig themes; acting as a Salla Partners Portal developer
-assistant. Managing the existing theme's supported settings, sections and
+assistant. Do not follow the decline with an offer to build it anyway.
+Managing the existing theme's supported settings, sections and
 configuration copies **is** in scope. See [references/scope.md](references/scope.md).
 
 ## 3. The execution protocol (every service)
@@ -128,7 +129,8 @@ Key rules that apply everywhere:
 
 Activate on «نطاق للمتاجر», «استخدم مهارة نطاق», «استخدم مهارة استور»,
 «استور» when addressed to you or in a store context, spelling variants, and
-`/nitaaq-store` (Claude Code) or `$nitaaq-store` (Codex). Do not activate on
+`/nitaaq-store` (Claude Code skill install), `/nitaaq-store:nitaaq-store`
+(Claude Code plugin install) or `$nitaaq-store` (Codex). Do not activate on
 unrelated "store"/«ستور» (App Store, storage, stored procedures). When unsure,
 check with `activation "<message>"` and the conversation context.
 Details: [references/activation.md](references/activation.md).

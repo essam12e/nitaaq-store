@@ -9,6 +9,21 @@
 
 ## 1) Claude Code
 
+### أ) كـ plugin من سوق nitaaq (موصى به)
+
+المستودع نفسه سوق plugins (`.claude-plugin/marketplace.json`).
+
+```
+/plugin marketplace add essam12e/nitaaq-store
+/plugin install nitaaq-store@nitaaq
+```
+
+- الأمر يصبح `/nitaaq-store:nitaaq-store` لأن مهارات الـplugin تأخذ اسمه كبادئة.
+- تم التحقق: `claude plugin validate` للسوق والـplugin، وتثبيت فعلي بـ Claude Code 2.1.285 أظهر المهارة `nitaaq-store`.
+- المستودع عام حالياً؛ لو جعلته خاصاً يحتاج كل مستخدم صلاحية قراءة عليه.
+
+### ب) كمجلد مهارة (سكربت التثبيت)
+
 | النطاق | المسار |
 |---|---|
 | لمستخدمك (كل المشاريع على هذا الجهاز) | `~/.claude/skills/nitaaq-store/` |

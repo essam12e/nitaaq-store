@@ -1,0 +1,12 @@
+{
+  "name": "nitaaq",
+  "description": "مهارات نطاق للتجار السعوديين",
+  "owner": { "name": "essam12e" },
+  "plugins": [
+    {
+      "name": "nitaaq-store",
+      "source": "./plugins/nitaaq-store",
+      "description": "نطاق للمتاجر | Nitaaq Store — تشغيل وتحسين وفحص متجرك في سلة بالعربي"
+    }
+  ]
+}

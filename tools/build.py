@@ -18,7 +18,7 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-CORE = ROOT / "skill" / "nitaaq-store"
+CORE = ROOT / "plugins" / "nitaaq-store" / "skills" / "nitaaq-store"
 DIST = ROOT / "dist"
 ADAPTERS = ROOT / "adapters"
 

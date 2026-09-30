@@ -8,4 +8,4 @@ Standard library only, so the helpers run in Claude Code, Codex and
 sandboxed code-execution environments without installing anything.
 """
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"

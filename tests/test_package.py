@@ -64,6 +64,35 @@ class BuildTests(unittest.TestCase):
                 self.assertIn(s, errs)
 
 
+class PluginTests(unittest.TestCase):
+    def test_marketplace_and_plugin_consistent(self):
+        mk = json.loads((_path.ROOT / ".claude-plugin/marketplace.json").read_text(encoding="utf-8"))
+        entry = mk["plugins"][0]
+        plugin_dir = (_path.ROOT / entry["source"]).resolve()
+        pj = json.loads((plugin_dir / ".claude-plugin/plugin.json").read_text(encoding="utf-8"))
+        self.assertEqual(entry["name"], pj["name"])
+        self.assertNotIn("..", entry["source"])
+        self.assertEqual(plugin_dir / "skills" / "nitaaq-store", _path.SKILL.resolve())
+        fm = build.parse_frontmatter(build.split_frontmatter((_path.SKILL / "SKILL.md").read_text(encoding="utf-8"))[0])
+        self.assertEqual(pj["version"], fm["metadata"]["version"])
+        import nitaaq
+        self.assertEqual(nitaaq.__version__, pj["version"])
+
+    def test_claude_cli_validate_if_available(self):
+        import shutil
+        if not shutil.which("claude"):
+            self.skipTest("claude CLI not installed")
+        for target in (_path.ROOT, _path.ROOT / "plugins/nitaaq-store"):
+            r = subprocess.run(["claude", "plugin", "validate", str(target)], capture_output=True, text=True, timeout=120)
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+
+class EvalFileTests(unittest.TestCase):
+    def test_offline_evals_pass(self):
+        r = subprocess.run([sys.executable, str(_path.ROOT / "tools/run_evals.py")], capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stdout)
+
+
 class InstallTests(unittest.TestCase):
     def run_install(self, home, *args):
         return install.main(["--home", str(home), "--no-build", *args])

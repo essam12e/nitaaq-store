@@ -4,7 +4,8 @@ How a skill is picked up is decided by each host, not by this file:
 
 | Host | Explicit | Implicit |
 |---|---|---|
-| Claude Code | `/nitaaq-store` (skill directory name) | Claude reads the `description` and loads the skill when relevant |
+| Claude Code (skill folder) | `/nitaaq-store` (skill directory name) | Claude reads the `description` and loads the skill when relevant |
+| Claude Code (plugin from the `nitaaq` marketplace) | `/nitaaq-store:nitaaq-store` (plugin skills are namespaced) | same |
 | Codex | `$nitaaq-store`, or pick it from `/skills` | Codex matches the description unless `allow_implicit_invocation: false` in `agents/openai.yaml` (this package leaves it `true`) |
 | claude.ai (uploaded skill) | No slash command guaranteed; mention the skill by name | Claude reads the description when Skills are enabled |
 
