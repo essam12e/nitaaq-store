@@ -1,0 +1,10 @@
+# Codex skill metadata (https://developers.openai.com/codex/skills).
+# UI presentation and invocation policy only; it grants no tools or access.
+interface:
+  display_name: "نطاق للمتاجر | Nitaaq Store"
+  short_description: "تشغيل وتحسين وفحص متجرك في سلة بالعربي"
+  brand_color: "#0E7C66"
+  default_prompt: "استخدم مهارة نطاق للمتاجر: "
+
+policy:
+  allow_implicit_invocation: true

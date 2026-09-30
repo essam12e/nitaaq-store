@@ -1,0 +1,7 @@
+{"_note": "Partners Agent Kit tool names as listed at https://docs.salla.dev/doc-2228622 (checked 2026-09-30); schemas simplified for tests.",
+ "tools": [
+ {"name": "mcp__salla-partners__salla_apps", "description": "Manage partner apps in the Salla Partners Portal.", "inputSchema": {"type": "object", "properties": {"action": {"type": "string", "enum": ["list", "get", "create", "update"]}}}},
+ {"name": "mcp__salla-partners__salla_shipping", "description": "Configure shipping app settings for a partner app.", "inputSchema": {"type": "object", "properties": {"action": {"type": "string", "enum": ["get", "update"]}}}},
+ {"name": "mcp__salla-partners__salla_scopes", "description": "Get or set app scopes.", "inputSchema": {"type": "object", "properties": {"action": {"type": "string", "enum": ["get", "set"]}}}},
+ {"name": "mcp__salla-partners__salla_upload", "description": "Upload a file for an app listing.", "inputSchema": {"type": "object", "properties": {}}}
+]}

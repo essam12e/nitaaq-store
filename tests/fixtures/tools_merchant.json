@@ -1,0 +1,18 @@
+{"_note": "Synthetic fixture for tests. These names are NOT a claim about any real connector.",
+ "tools": [
+ {"name": "mcp__store__list_products", "description": "List products in the merchant store with pagination and keyword filter.", "inputSchema": {"type": "object", "properties": {"page": {"type": "integer"}, "per_page": {"type": "integer"}, "keyword": {"type": "string"}, "status": {"type": "string"}}}, "annotations": {"readOnlyHint": true}},
+ {"name": "mcp__store__get_product", "description": "Get product details by id.", "inputSchema": {"type": "object", "properties": {"id": {"type": "integer"}}, "required": ["id"]}, "annotations": {"readOnlyHint": true}},
+ {"name": "mcp__store__create_product", "description": "Create a new product.", "inputSchema": {"type": "object", "properties": {"name": {"type": "string"}, "price": {"type": "number"}, "sale_price": {"type": "number"}, "product_type": {"type": "string", "enum": ["product", "service"]}, "quantity": {"type": "integer"}}, "required": ["name", "price", "product_type", "quantity"]}},
+ {"name": "mcp__store__update_product", "description": "Update product fields. Omitted fields are kept.", "inputSchema": {"type": "object", "properties": {"id": {"type": "integer"}, "name": {"type": "string"}, "price": {"type": "number"}}, "required": ["id"]}, "annotations": {"idempotentHint": true}},
+ {"name": "mcp__store__update_product_quantity", "description": "Set stock quantity for a product or variant.", "inputSchema": {"type": "object", "properties": {"product_id": {"type": "integer"}, "quantity": {"type": "integer"}, "branch_id": {"type": "integer"}}, "required": ["product_id", "quantity"]}},
+ {"name": "mcp__store__list_orders", "description": "List orders, filterable by status and date range.", "inputSchema": {"type": "object", "properties": {"page": {"type": "integer"}, "from_date": {"type": "string"}, "to_date": {"type": "string"}, "status": {"type": "string"}}}, "annotations": {"readOnlyHint": true}},
+ {"name": "mcp__store__get_order", "description": "Order details including items, totals, customer and address.", "inputSchema": {"type": "object", "properties": {"id": {"type": "integer"}}, "required": ["id"]}},
+ {"name": "mcp__store__get_order_status_history", "description": "Order status history.", "inputSchema": {"type": "object", "properties": {"order_id": {"type": "integer"}}}},
+ {"name": "mcp__store__list_order_statuses", "description": "Merchant-defined order statuses.", "inputSchema": {"type": "object", "properties": {}}},
+ {"name": "mcp__store__update_order_status", "description": "Change order status. May notify the customer.", "inputSchema": {"type": "object", "properties": {"order_id": {"type": "integer"}, "status_id": {"type": "integer"}, "note": {"type": "string"}}, "required": ["order_id", "status_id"]}},
+ {"name": "mcp__store__list_abandoned_carts", "description": "Abandoned carts with items.", "inputSchema": {"type": "object", "properties": {"page": {"type": "integer"}}}},
+ {"name": "mcp__store__get_sales_report", "description": "Sales report between dates.", "inputSchema": {"type": "object", "properties": {"from": {"type": "string"}, "to": {"type": "string"}}}},
+ {"name": "mcp__store__list_categories", "description": "Store categories.", "inputSchema": {"type": "object", "properties": {}}},
+ {"name": "mcp__store__get_best_selling_products", "description": "Top products by sold quantity.", "inputSchema": {"type": "object", "properties": {"period": {"type": "string"}}}},
+ {"name": "mcp__store__search_docs", "description": "Search documentation.", "inputSchema": {"type": "object", "properties": {"q": {"type": "string"}}}}
+]}

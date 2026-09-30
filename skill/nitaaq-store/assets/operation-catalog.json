@@ -1,0 +1,1485 @@
+{
+ "version": 1,
+ "entity_keywords": {
+  "product": [
+   "product",
+   "products",
+   "item",
+   "catalog",
+   "منتج",
+   "منتجات"
+  ],
+  "variant": [
+   "variant",
+   "variants",
+   "option",
+   "options",
+   "sku",
+   "skus",
+   "متغير",
+   "خيارات"
+  ],
+  "stock": [
+   "stock",
+   "inventory",
+   "quantity",
+   "quantities",
+   "مخزون",
+   "كميه",
+   "كميات"
+  ],
+  "branch": [
+   "branch",
+   "branches",
+   "warehouse",
+   "location",
+   "فرع",
+   "فروع",
+   "مستودع"
+  ],
+  "category": [
+   "category",
+   "categories",
+   "تصنيف",
+   "تصنيفات"
+  ],
+  "brand": [
+   "brand",
+   "brands",
+   "ماركه",
+   "علامه"
+  ],
+  "tag": [
+   "tag",
+   "tags",
+   "وسم"
+  ],
+  "image": [
+   "image",
+   "images",
+   "media",
+   "photo",
+   "file",
+   "upload",
+   "صوره",
+   "صور"
+  ],
+  "order": [
+   "order",
+   "orders",
+   "طلب",
+   "طلبات"
+  ],
+  "status": [
+   "status",
+   "statuses",
+   "state",
+   "حاله"
+  ],
+  "history": [
+   "history",
+   "histories",
+   "timeline",
+   "log",
+   "سجل"
+  ],
+  "note": [
+   "note",
+   "notes",
+   "comment",
+   "ملاحظه"
+  ],
+  "invoice": [
+   "invoice",
+   "invoices",
+   "tax",
+   "فاتوره",
+   "فواتير"
+  ],
+  "customer": [
+   "customer",
+   "customers",
+   "client",
+   "عميل",
+   "عملاء"
+  ],
+  "cart": [
+   "cart",
+   "carts",
+   "abandoned",
+   "سله",
+   "سلات",
+   "متروكه"
+  ],
+  "review": [
+   "review",
+   "reviews",
+   "rating",
+   "ratings",
+   "feedback",
+   "تقييم",
+   "تقييمات"
+  ],
+  "report": [
+   "report",
+   "reports",
+   "analytics",
+   "statistics",
+   "stats",
+   "تقرير",
+   "تقارير",
+   "احصائيات"
+  ],
+  "theme": [
+   "theme",
+   "themes",
+   "template",
+   "ثيم",
+   "قالب"
+  ],
+  "section": [
+   "section",
+   "sections",
+   "component",
+   "components",
+   "block",
+   "قسم",
+   "عنصر"
+  ],
+  "homepage": [
+   "home",
+   "homepage",
+   "رئيسيه"
+  ],
+  "page": [
+   "page",
+   "pages",
+   "landing",
+   "صفحه",
+   "هبوط"
+  ],
+  "menu": [
+   "menu",
+   "menus",
+   "navigation",
+   "link",
+   "links",
+   "قائمه"
+  ],
+  "settings": [
+   "setting",
+   "settings",
+   "config",
+   "configuration",
+   "اعدادات"
+  ],
+  "store": [
+   "store",
+   "merchant",
+   "shop",
+   "account",
+   "متجر"
+  ],
+  "coupon": [
+   "coupon",
+   "coupons",
+   "كوبون"
+  ],
+  "offer": [
+   "offer",
+   "offers",
+   "promotion",
+   "discount",
+   "عرض",
+   "عروض"
+  ],
+  "shipping": [
+   "shipping",
+   "shipment",
+   "shipments",
+   "courier",
+   "شحن",
+   "شحنه"
+  ],
+  "trash": [
+   "trash",
+   "trashed",
+   "deleted",
+   "محذوف"
+  ]
+ },
+ "action_keywords": {
+  "list": [
+   "list",
+   "search",
+   "find",
+   "browse",
+   "all",
+   "query",
+   "filter",
+   "عرض",
+   "بحث"
+  ],
+  "get": [
+   "get",
+   "details",
+   "detail",
+   "show",
+   "fetch",
+   "retrieve",
+   "view",
+   "info",
+   "تفاصيل"
+  ],
+  "create": [
+   "create",
+   "add",
+   "new",
+   "insert",
+   "post",
+   "انشاء",
+   "اضافه"
+  ],
+  "update": [
+   "update",
+   "edit",
+   "modify",
+   "patch",
+   "change",
+   "set",
+   "تعديل",
+   "تحديث"
+  ],
+  "delete": [
+   "delete",
+   "remove",
+   "destroy",
+   "حذف"
+  ],
+  "status": [
+   "status",
+   "publish",
+   "hide",
+   "unhide",
+   "visibility",
+   "activate",
+   "deactivate",
+   "نشر",
+   "اخفاء"
+  ],
+  "adjust": [
+   "adjust",
+   "increment",
+   "decrement",
+   "restock",
+   "increase",
+   "decrease"
+  ],
+  "upload": [
+   "upload",
+   "attach",
+   "add",
+   "رفع"
+  ],
+  "reorder": [
+   "reorder",
+   "sort",
+   "position",
+   "move",
+   "ترتيب"
+  ],
+  "clone": [
+   "clone",
+   "duplicate",
+   "copy",
+   "نسخ"
+  ],
+  "preview": [
+   "preview",
+   "معاينه"
+  ],
+  "schedule": [
+   "schedule",
+   "scheduled",
+   "جدوله"
+  ]
+ },
+ "operations": [
+  {
+   "id": "store.info",
+   "label_ar": "بيانات المتجر",
+   "domain": "store",
+   "access": "read",
+   "entities": [
+    "store"
+   ],
+   "actions": [
+    "get"
+   ],
+   "sensitivity": "low",
+   "idempotent": null,
+   "verify_with": null,
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "products.list",
+   "label_ar": "قائمة المنتجات",
+   "domain": "products",
+   "access": "read",
+   "entities": [
+    "product"
+   ],
+   "actions": [
+    "list"
+   ],
+   "sensitivity": "low",
+   "idempotent": null,
+   "verify_with": null,
+   "schema_hints": [
+    "page",
+    "per_page",
+    "keyword",
+    "category",
+    "status"
+   ],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "products.get",
+   "label_ar": "تفاصيل منتج",
+   "domain": "products",
+   "access": "read",
+   "entities": [
+    "product"
+   ],
+   "actions": [
+    "get"
+   ],
+   "sensitivity": "low",
+   "idempotent": null,
+   "verify_with": null,
+   "schema_hints": [
+    "id",
+    "product_id"
+   ],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "products.create",
+   "label_ar": "إنشاء منتج",
+   "domain": "products",
+   "access": "write",
+   "entities": [
+    "product"
+   ],
+   "actions": [
+    "create"
+   ],
+   "sensitivity": "medium",
+   "idempotent": false,
+   "verify_with": "products.get",
+   "schema_hints": [
+    "name",
+    "price",
+    "product_type",
+    "quantity"
+   ],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "products.update",
+   "label_ar": "تعديل منتج",
+   "domain": "products",
+   "access": "write",
+   "entities": [
+    "product"
+   ],
+   "actions": [
+    "update"
+   ],
+   "sensitivity": "medium",
+   "idempotent": true,
+   "verify_with": "products.get",
+   "schema_hints": [
+    "id",
+    "product_id"
+   ],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "products.set_status",
+   "label_ar": "نشر/إخفاء منتج",
+   "domain": "products",
+   "access": "write",
+   "entities": [
+    "product"
+   ],
+   "actions": [
+    "status"
+   ],
+   "sensitivity": "medium",
+   "idempotent": true,
+   "verify_with": "products.get",
+   "schema_hints": [
+    "status"
+   ],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "products.delete",
+   "label_ar": "حذف منتج",
+   "domain": "products",
+   "access": "destructive",
+   "entities": [
+    "product"
+   ],
+   "actions": [
+    "delete"
+   ],
+   "sensitivity": "high",
+   "idempotent": true,
+   "verify_with": "products.get",
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "products.trash_list",
+   "label_ar": "المنتجات المحذوفة",
+   "domain": "products",
+   "access": "read",
+   "entities": [
+    "product",
+    "trash"
+   ],
+   "actions": [
+    "list"
+   ],
+   "sensitivity": "low",
+   "idempotent": null,
+   "verify_with": null,
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "products.variants",
+   "label_ar": "المتغيرات والخيارات",
+   "domain": "products",
+   "access": "read",
+   "entities": [
+    "variant"
+   ],
+   "actions": [
+    "list",
+    "get"
+   ],
+   "sensitivity": "low",
+   "idempotent": null,
+   "verify_with": null,
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "products.best_sellers",
+   "label_ar": "الأكثر مبيعاً",
+   "domain": "products",
+   "access": "read",
+   "entities": [
+    "product"
+   ],
+   "actions": [
+    "list",
+    "get"
+   ],
+   "sensitivity": "low",
+   "idempotent": null,
+   "verify_with": null,
+   "schema_hints": [],
+   "require_any": [
+    "best",
+    "top",
+    "selling",
+    "sellers",
+    "bestseller",
+    "bestsellers",
+    "الاكثر"
+   ],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": "حدّد المقياس والفترة"
+  },
+  {
+   "id": "products.images.attach",
+   "label_ar": "إرفاق صورة بمنتج",
+   "domain": "products",
+   "access": "write",
+   "entities": [
+    "image",
+    "product"
+   ],
+   "actions": [
+    "upload"
+   ],
+   "sensitivity": "medium",
+   "idempotent": false,
+   "verify_with": "products.get",
+   "schema_hints": [
+    "image",
+    "url",
+    "file"
+   ],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "categories.list",
+   "label_ar": "التصنيفات",
+   "domain": "catalog",
+   "access": "read",
+   "entities": [
+    "category"
+   ],
+   "actions": [
+    "list"
+   ],
+   "sensitivity": "low",
+   "idempotent": null,
+   "verify_with": null,
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "categories.create",
+   "label_ar": "إنشاء تصنيف",
+   "domain": "catalog",
+   "access": "write",
+   "entities": [
+    "category"
+   ],
+   "actions": [
+    "create"
+   ],
+   "sensitivity": "medium",
+   "idempotent": false,
+   "verify_with": "categories.list",
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "brands.list",
+   "label_ar": "الماركات",
+   "domain": "catalog",
+   "access": "read",
+   "entities": [
+    "brand"
+   ],
+   "actions": [
+    "list"
+   ],
+   "sensitivity": "low",
+   "idempotent": null,
+   "verify_with": null,
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "tags.list",
+   "label_ar": "الوسوم",
+   "domain": "catalog",
+   "access": "read",
+   "entities": [
+    "tag"
+   ],
+   "actions": [
+    "list"
+   ],
+   "sensitivity": "low",
+   "idempotent": null,
+   "verify_with": null,
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "inventory.read",
+   "label_ar": "قراءة المخزون",
+   "domain": "inventory",
+   "access": "read",
+   "entities": [
+    "stock"
+   ],
+   "actions": [
+    "get",
+    "list"
+   ],
+   "sensitivity": "low",
+   "idempotent": null,
+   "verify_with": null,
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "inventory.set",
+   "label_ar": "تعيين الكمية",
+   "domain": "inventory",
+   "access": "write",
+   "entities": [
+    "stock"
+   ],
+   "actions": [
+    "update"
+   ],
+   "sensitivity": "medium",
+   "idempotent": true,
+   "verify_with": "inventory.read",
+   "schema_hints": [
+    "quantity"
+   ],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "inventory.adjust",
+   "label_ar": "زيادة/إنقاص الكمية",
+   "domain": "inventory",
+   "access": "write",
+   "entities": [
+    "stock"
+   ],
+   "actions": [
+    "adjust"
+   ],
+   "sensitivity": "medium",
+   "idempotent": false,
+   "verify_with": "inventory.read",
+   "schema_hints": [
+    "quantity",
+    "mode"
+   ],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": "غير متكرر الأمان: لا تُعِد المحاولة قبل المطابقة"
+  },
+  {
+   "id": "inventory.branches",
+   "label_ar": "كميات الفروع",
+   "domain": "inventory",
+   "access": "read",
+   "entities": [
+    "branch",
+    "stock"
+   ],
+   "actions": [
+    "list",
+    "get"
+   ],
+   "sensitivity": "low",
+   "idempotent": null,
+   "verify_with": null,
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "theme.list",
+   "label_ar": "القوالب المثبتة",
+   "domain": "appearance",
+   "access": "read",
+   "entities": [
+    "theme"
+   ],
+   "actions": [
+    "list"
+   ],
+   "sensitivity": "low",
+   "idempotent": null,
+   "verify_with": null,
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "theme.settings.get",
+   "label_ar": "إعدادات القالب",
+   "domain": "appearance",
+   "access": "read",
+   "entities": [
+    "theme",
+    "settings"
+   ],
+   "actions": [
+    "get"
+   ],
+   "sensitivity": "low",
+   "idempotent": null,
+   "verify_with": null,
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "theme.settings.update",
+   "label_ar": "تعديل إعدادات القالب",
+   "domain": "appearance",
+   "access": "write",
+   "entities": [
+    "theme",
+    "settings"
+   ],
+   "actions": [
+    "update"
+   ],
+   "sensitivity": "medium",
+   "idempotent": true,
+   "verify_with": "theme.settings.get",
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "theme.clone",
+   "label_ar": "نسخ إعدادات قالب",
+   "domain": "appearance",
+   "access": "write",
+   "entities": [
+    "theme"
+   ],
+   "actions": [
+    "clone"
+   ],
+   "sensitivity": "medium",
+   "idempotent": false,
+   "verify_with": "theme.list",
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "theme.preview",
+   "label_ar": "معاينة القالب",
+   "domain": "appearance",
+   "access": "read",
+   "entities": [
+    "theme"
+   ],
+   "actions": [
+    "preview"
+   ],
+   "sensitivity": "low",
+   "idempotent": null,
+   "verify_with": null,
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "theme.publish",
+   "label_ar": "نشر القالب",
+   "domain": "appearance",
+   "access": "write",
+   "entities": [
+    "theme"
+   ],
+   "actions": [
+    "status"
+   ],
+   "sensitivity": "high",
+   "idempotent": true,
+   "verify_with": "theme.list",
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "home.sections.list",
+   "label_ar": "أقسام الرئيسية",
+   "domain": "appearance",
+   "access": "read",
+   "entities": [
+    "section",
+    "homepage"
+   ],
+   "actions": [
+    "list",
+    "get"
+   ],
+   "sensitivity": "low",
+   "idempotent": null,
+   "verify_with": null,
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "home.sections.types",
+   "label_ar": "أنواع الأقسام المتاحة",
+   "domain": "appearance",
+   "access": "read",
+   "entities": [
+    "section"
+   ],
+   "actions": [
+    "list",
+    "get"
+   ],
+   "sensitivity": "low",
+   "idempotent": null,
+   "verify_with": null,
+   "schema_hints": [],
+   "require_any": [
+    "types",
+    "type",
+    "available",
+    "catalog",
+    "schema",
+    "انواع"
+   ],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": "كتالوج أنواع الأقسام التي يدعمها القالب"
+  },
+  {
+   "id": "home.sections.create",
+   "label_ar": "إضافة قسم",
+   "domain": "appearance",
+   "access": "write",
+   "entities": [
+    "section"
+   ],
+   "actions": [
+    "create"
+   ],
+   "sensitivity": "medium",
+   "idempotent": false,
+   "verify_with": "home.sections.list",
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "home.sections.update",
+   "label_ar": "تعديل قسم",
+   "domain": "appearance",
+   "access": "write",
+   "entities": [
+    "section"
+   ],
+   "actions": [
+    "update"
+   ],
+   "sensitivity": "medium",
+   "idempotent": true,
+   "verify_with": "home.sections.list",
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "home.sections.reorder",
+   "label_ar": "ترتيب الأقسام",
+   "domain": "appearance",
+   "access": "write",
+   "entities": [
+    "section"
+   ],
+   "actions": [
+    "reorder"
+   ],
+   "sensitivity": "low",
+   "idempotent": true,
+   "verify_with": "home.sections.list",
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "home.sections.delete",
+   "label_ar": "حذف قسم",
+   "domain": "appearance",
+   "access": "destructive",
+   "entities": [
+    "section"
+   ],
+   "actions": [
+    "delete"
+   ],
+   "sensitivity": "high",
+   "idempotent": true,
+   "verify_with": "home.sections.list",
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "pages.list",
+   "label_ar": "الصفحات",
+   "domain": "appearance",
+   "access": "read",
+   "entities": [
+    "page"
+   ],
+   "actions": [
+    "list"
+   ],
+   "sensitivity": "low",
+   "idempotent": null,
+   "verify_with": null,
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "pages.create",
+   "label_ar": "إنشاء صفحة هبوط",
+   "domain": "appearance",
+   "access": "write",
+   "entities": [
+    "page"
+   ],
+   "actions": [
+    "create"
+   ],
+   "sensitivity": "medium",
+   "idempotent": false,
+   "verify_with": "pages.list",
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "pages.update",
+   "label_ar": "تعديل صفحة",
+   "domain": "appearance",
+   "access": "write",
+   "entities": [
+    "page"
+   ],
+   "actions": [
+    "update"
+   ],
+   "sensitivity": "medium",
+   "idempotent": true,
+   "verify_with": "pages.list",
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "pages.publish",
+   "label_ar": "نشر/جدولة صفحة",
+   "domain": "appearance",
+   "access": "write",
+   "entities": [
+    "page"
+   ],
+   "actions": [
+    "status",
+    "schedule"
+   ],
+   "sensitivity": "medium",
+   "idempotent": true,
+   "verify_with": "pages.list",
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "pages.delete",
+   "label_ar": "حذف صفحة",
+   "domain": "appearance",
+   "access": "destructive",
+   "entities": [
+    "page"
+   ],
+   "actions": [
+    "delete"
+   ],
+   "sensitivity": "high",
+   "idempotent": true,
+   "verify_with": "pages.list",
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "menus.list",
+   "label_ar": "القوائم",
+   "domain": "appearance",
+   "access": "read",
+   "entities": [
+    "menu"
+   ],
+   "actions": [
+    "list",
+    "get"
+   ],
+   "sensitivity": "low",
+   "idempotent": null,
+   "verify_with": null,
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "menus.update",
+   "label_ar": "تعديل القوائم",
+   "domain": "appearance",
+   "access": "write",
+   "entities": [
+    "menu"
+   ],
+   "actions": [
+    "update",
+    "create"
+   ],
+   "sensitivity": "medium",
+   "idempotent": true,
+   "verify_with": "menus.list",
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "assets.upload",
+   "label_ar": "رفع ملف/صورة",
+   "domain": "appearance",
+   "access": "write",
+   "entities": [
+    "image"
+   ],
+   "actions": [
+    "upload"
+   ],
+   "sensitivity": "low",
+   "idempotent": false,
+   "verify_with": null,
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "branding.update",
+   "label_ar": "الشعار وألوان الهوية",
+   "domain": "appearance",
+   "access": "write",
+   "entities": [
+    "store",
+    "settings"
+   ],
+   "actions": [
+    "update"
+   ],
+   "sensitivity": "high",
+   "idempotent": true,
+   "verify_with": "store.info",
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": "قد يتطلب تحقق لوحة التحكم أو OTP"
+  },
+  {
+   "id": "orders.list",
+   "label_ar": "قائمة الطلبات",
+   "domain": "orders",
+   "access": "read",
+   "entities": [
+    "order"
+   ],
+   "actions": [
+    "list"
+   ],
+   "sensitivity": "low",
+   "idempotent": null,
+   "verify_with": null,
+   "schema_hints": [
+    "page",
+    "from_date",
+    "to_date",
+    "status"
+   ],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "orders.get",
+   "label_ar": "تفاصيل طلب",
+   "domain": "orders",
+   "access": "read",
+   "entities": [
+    "order"
+   ],
+   "actions": [
+    "get"
+   ],
+   "sensitivity": "low",
+   "idempotent": null,
+   "verify_with": null,
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "orders.statuses",
+   "label_ar": "حالات الطلب الخاصة بالمتجر",
+   "domain": "orders",
+   "access": "read",
+   "entities": [
+    "order",
+    "status"
+   ],
+   "actions": [
+    "list"
+   ],
+   "sensitivity": "low",
+   "idempotent": null,
+   "verify_with": null,
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "orders.history",
+   "label_ar": "سجل حالة الطلب",
+   "domain": "orders",
+   "access": "read",
+   "entities": [
+    "order",
+    "history"
+   ],
+   "actions": [
+    "list",
+    "get"
+   ],
+   "sensitivity": "low",
+   "idempotent": null,
+   "verify_with": null,
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "orders.update_status",
+   "label_ar": "تغيير حالة طلب",
+   "domain": "orders",
+   "access": "write",
+   "entities": [
+    "order",
+    "status"
+   ],
+   "actions": [
+    "update"
+   ],
+   "sensitivity": "high",
+   "idempotent": true,
+   "verify_with": "orders.get",
+   "schema_hints": [
+    "status_id",
+    "status"
+   ],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": "قد يرسل إشعاراً للعميل"
+  },
+  {
+   "id": "orders.add_note",
+   "label_ar": "ملاحظة داخلية على طلب",
+   "domain": "orders",
+   "access": "write",
+   "entities": [
+    "order",
+    "note"
+   ],
+   "actions": [
+    "create",
+    "update"
+   ],
+   "sensitivity": "low",
+   "idempotent": false,
+   "verify_with": "orders.get",
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "invoices.list",
+   "label_ar": "الفواتير الضريبية",
+   "domain": "orders",
+   "access": "read",
+   "entities": [
+    "invoice"
+   ],
+   "actions": [
+    "list",
+    "get"
+   ],
+   "sensitivity": "low",
+   "idempotent": null,
+   "verify_with": null,
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "customers.list",
+   "label_ar": "العملاء",
+   "domain": "orders",
+   "access": "read",
+   "entities": [
+    "customer"
+   ],
+   "actions": [
+    "list",
+    "get"
+   ],
+   "sensitivity": "low",
+   "idempotent": null,
+   "verify_with": null,
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "carts.abandoned",
+   "label_ar": "السلات المتروكة",
+   "domain": "orders",
+   "access": "read",
+   "entities": [
+    "cart"
+   ],
+   "actions": [
+    "list",
+    "get"
+   ],
+   "sensitivity": "low",
+   "idempotent": null,
+   "verify_with": null,
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "reviews.list",
+   "label_ar": "التقييمات",
+   "domain": "orders",
+   "access": "read",
+   "entities": [
+    "review"
+   ],
+   "actions": [
+    "list"
+   ],
+   "sensitivity": "low",
+   "idempotent": null,
+   "verify_with": null,
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "reviews.reply",
+   "label_ar": "الرد على تقييم",
+   "domain": "orders",
+   "access": "write",
+   "entities": [
+    "review"
+   ],
+   "actions": [
+    "create",
+    "update"
+   ],
+   "sensitivity": "high",
+   "idempotent": false,
+   "verify_with": null,
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": "رسالة ظاهرة للعملاء"
+  },
+  {
+   "id": "coupons.list",
+   "label_ar": "الكوبونات",
+   "domain": "orders",
+   "access": "read",
+   "entities": [
+    "coupon"
+   ],
+   "actions": [
+    "list"
+   ],
+   "sensitivity": "low",
+   "idempotent": null,
+   "verify_with": null,
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "coupons.create",
+   "label_ar": "إنشاء كوبون",
+   "domain": "orders",
+   "access": "write",
+   "entities": [
+    "coupon"
+   ],
+   "actions": [
+    "create"
+   ],
+   "sensitivity": "high",
+   "idempotent": false,
+   "verify_with": null,
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "offers.list",
+   "label_ar": "العروض",
+   "domain": "orders",
+   "access": "read",
+   "entities": [
+    "offer"
+   ],
+   "actions": [
+    "list"
+   ],
+   "sensitivity": "low",
+   "idempotent": null,
+   "verify_with": null,
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "shipping.list",
+   "label_ar": "الشحن",
+   "domain": "orders",
+   "access": "read",
+   "entities": [
+    "shipping"
+   ],
+   "actions": [
+    "list",
+    "get"
+   ],
+   "sensitivity": "low",
+   "idempotent": null,
+   "verify_with": null,
+   "schema_hints": [],
+   "require_any": [],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "reports.summary",
+   "label_ar": "ملخص تشغيلي",
+   "domain": "reports",
+   "access": "read",
+   "entities": [
+    "report"
+   ],
+   "actions": [
+    "get",
+    "list"
+   ],
+   "sensitivity": "low",
+   "idempotent": null,
+   "verify_with": null,
+   "schema_hints": [],
+   "require_any": [
+    "summary",
+    "overview",
+    "dashboard",
+    "ملخص"
+   ],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  },
+  {
+   "id": "reports.sales",
+   "label_ar": "تقارير المبيعات",
+   "domain": "reports",
+   "access": "read",
+   "entities": [
+    "report"
+   ],
+   "actions": [
+    "get",
+    "list"
+   ],
+   "sensitivity": "low",
+   "idempotent": null,
+   "verify_with": null,
+   "schema_hints": [
+    "from",
+    "to",
+    "date"
+   ],
+   "require_any": [
+    "sales",
+    "revenue",
+    "مبيعات"
+   ],
+   "fallback_ar": "غير متاح عبر الأدوات المتصلة؛ جهّز المقترح وقدّم خطوات لوحة تحكم سلة.",
+   "notes": null
+  }
+ ]
+}

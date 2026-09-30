@@ -1,0 +1,4 @@
+{
+  "_comment": "Extra frontmatter fields added only to the Claude Code package. Claude Code supports them; the portable Agent Skills spec (claude.ai upload, Codex) does not, so they stay out of the shared core.",
+  "argument-hint": "[طلبك بالعربي]"
+}

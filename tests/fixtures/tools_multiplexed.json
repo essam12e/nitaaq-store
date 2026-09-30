@@ -1,0 +1,5 @@
+{"_note": "Synthetic multiplexed connector: one tool per entity with an action enum.",
+ "tools": [
+ {"name": "products", "description": "Merchant products. Use action to list, get, create or update.", "inputSchema": {"type": "object", "properties": {"action": {"type": "string", "enum": ["list", "get", "create", "update"]}, "id": {"type": "integer"}, "page": {"type": "integer"}}}},
+ {"name": "orders", "description": "Merchant orders.", "inputSchema": {"type": "object", "properties": {"action": {"type": "string", "enum": ["list", "get"]}, "page": {"type": "integer"}}}}
+]}
