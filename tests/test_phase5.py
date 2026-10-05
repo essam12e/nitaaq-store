@@ -183,8 +183,12 @@ class Phase5RoutingCliTests(unittest.TestCase):
         copy = routing.route("اكتب لي نص الاعلان لعطر العود", {"products.list"})
         self.assertEqual(copy["specialists_to_run"], ["ad_creative"])  # drafts from store facts, on request only
 
-    def test_later_phases_still_honest(self):
-        st = routing.route("أبي رسايل للعملاء القدام", {"orders.list", "customers.list"})["stages"]
+    def test_planned_agents_stay_honest(self):
+        import copy
+        from nitaaq import registry
+        reg = copy.deepcopy(registry.load())
+        next(a for a in reg["agents"] if a["id"] == "email_retention")["status"] = "planned"
+        st = routing.route("أبي رسايل للعملاء القدام", {"orders.list", "customers.list"}, reg)["stages"]
         self.assertEqual(st[0]["status"], "not_available_yet")
 
     def test_focus_and_execution_path(self):

@@ -409,6 +409,29 @@ CLAIMS = re.compile(r"(أصلي|اصلي|الأفضل|الافضل|رقم\s*1|ا
 NUMBER = re.compile(r"\d+(?:[.,]\d+)?")
 
 
+def fact_issues(texts: list[str], facts: dict | None) -> list[dict]:
+    """Claims and numbers in customer-facing text that the store's own data does not back."""
+    facts = facts or {}
+    allowed = {str(parse_amount(facts[k])) for k in ("price", "sale_price") if parse_amount(facts.get(k)) is not None}
+    if parse_amount(facts.get("price")) and parse_amount(facts.get("sale_price")):
+        p, s = parse_amount(facts["price"]), parse_amount(facts["sale_price"])
+        allowed.add(str(((p - s) / p * 100).quantize(Decimal(1), ROUND_HALF_UP)))
+    allowed |= {str(parse_amount(x)) for x in facts.get("numbers_verified", [])}
+    verified = _norm_list(facts.get("claims_verified"))
+    issues = []
+    for t in texts:
+        for m in CLAIMS.finditer(t):
+            word = normalize(m.group(0))
+            if ("شحن" in word or "توصيل" in word) and facts.get("free_shipping") is True:
+                continue
+            if not any(v in word or word in v for v in verified):
+                issues.append({"check": "claim_needs_proof", "text": t, "claim": m.group(0)})
+        for num in NUMBER.findall(to_western_digits(t)):
+            if str(parse_amount(num)) not in allowed:
+                issues.append({"check": "unverified_number", "text": t, "number": num})
+    return issues
+
+
 def rsa_check(headlines: list[str], descriptions: list[str], *, facts: dict | None = None) -> dict:
     """Responsive search ad text against platform limits and store facts.
 
@@ -431,23 +454,7 @@ def rsa_check(headlines: list[str], descriptions: list[str], *, facts: dict | No
         issues.append({"check": "headline_count", "count": len(headlines)})
     if not RSA_LIMITS["min_descriptions"] <= len(descriptions) <= RSA_LIMITS["max_descriptions"]:
         issues.append({"check": "description_count", "count": len(descriptions)})
-    facts = facts or {}
-    allowed = {str(parse_amount(facts[k])) for k in ("price", "sale_price") if parse_amount(facts.get(k)) is not None}
-    if parse_amount(facts.get("price")) and parse_amount(facts.get("sale_price")):
-        p, s = parse_amount(facts["price"]), parse_amount(facts["sale_price"])
-        allowed.add(str(((p - s) / p * 100).quantize(Decimal(1), ROUND_HALF_UP)))
-    allowed |= {str(x) for x in facts.get("numbers_verified", [])}
-    verified = _norm_list(facts.get("claims_verified"))
-    for t in headlines + descriptions:
-        for m in CLAIMS.finditer(t):
-            word = normalize(m.group(0))
-            if ("شحن" in word or "توصيل" in word) and facts.get("free_shipping") is True:
-                continue
-            if not any(v in word or word in v for v in verified):
-                issues.append({"check": "claim_needs_proof", "text": t, "claim": m.group(0)})
-        for num in NUMBER.findall(to_western_digits(t)):
-            if str(parse_amount(num)) not in allowed:
-                issues.append({"check": "unverified_number", "text": t, "number": num})
+    issues += fact_issues(headlines + descriptions, facts)
     counts = defaultdict(int)
     for i in issues:
         counts[i["check"]] += 1

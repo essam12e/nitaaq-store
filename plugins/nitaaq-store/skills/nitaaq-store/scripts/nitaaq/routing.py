@@ -65,7 +65,7 @@ INTENT_AGENTS = {
     "reviews": ["customer_intelligence"],
     "retention": ["email_retention"],
     "cro": ["cro"],
-    "strategy": ["store_analytics", "business_strategist"],
+    "strategy": ["store_analytics", "pricing", "growth", "customer_intelligence", "business_strategist"],
     "growth": ["growth"],
     "simple_read": [],
     "operation": [],
@@ -214,8 +214,9 @@ def route(message: str, available: set[str], reg: dict | None = None) -> dict:
             if s["agent"] == "ad_creative" and s["status"] == "run":
                 s.update(status="blocked", missing=["external:ads|export:ads"],
                          reason_ar="لا توجد بيانات إعلانات؛ نكتب نصوص إعلانات من بيانات المنتجات فقط إذا طلبتها.")
-    runnable = [s for s in stages if s["status"] == "run"]
-    cap = lim["max_specialists_broad"] if c["intent"] == "broad_improvement" else lim["max_specialists_simple"]
+    synth = next((s for s in stages if s["agent"] == "business_strategist"), None)
+    runnable = [s for s in stages if s["status"] == "run" and s is not synth]
+    cap = lim["max_specialists_broad"] if c["intent"] in ("broad_improvement", "strategy") else lim["max_specialists_simple"]
     cap = min(cap, lim["max_specialists_absolute"])
     for s in runnable[cap:]:
         s["status"], s["reason_ar"] = "deferred", "تجاوز حد التخصصات لهذا الطلب؛ يُقترح لاحقاً."
@@ -225,6 +226,14 @@ def route(message: str, available: set[str], reg: dict | None = None) -> dict:
     for s in runnable:
         s["depends_on"] = [base] if base and s["agent"] != base else []
         s["parallel_group"] = 0 if s["agent"] == base or not base else 1
+    if synth and synth["status"] == "run":
+        # the strategist synthesizes; it never runs alone or on one specialist's view
+        if len(runnable) >= 2:
+            synth.update(depends_on=[x["agent"] for x in runnable], parallel_group=2)
+            runnable.append(synth)
+        else:
+            synth.update(status="blocked", missing=["two_specialists"],
+                         reason_ar="الاستراتيجي يحتاج نتائج تخصصين على الأقل؛ البيانات المتاحة تكفي لأقل من ذلك.")
     material = c["intent"] in ("sales_change", "broad_improvement", "strategy") or c["kind"] in ("recommendation",)
     reads = _operator_reads(c["intent"], available)
     alts = {"reviews.list": ("reviews.list", "export:reviews"), "external:analytics": ("external:analytics", "export:analytics"),
@@ -239,8 +248,8 @@ def route(message: str, available: set[str], reg: dict | None = None) -> dict:
         "review_required": bool(runnable) and material,
         "existing_service": EXISTING_SERVICE.get(c["intent"]),
         "unknowns_ar": unknown,
-        "execution_path": ("ads_proposal_only" if c["intent"] == "ads" else "salla_operator_with_approval")
-        if c["kind"] == "execution" else None,
+        "execution_path": {"ads": "ads_proposal_only", "retention": "message_send_gate"}.get(
+            c["intent"], "salla_operator_with_approval") if c["kind"] == "execution" else None,
         "limits": {k: lim[k] for k in ("max_delegation_depth", "max_review_rounds", "max_stage_attempts", "stage_timeout_minutes")},
     }
     if c["intent"] in ("sales_change", "sales_report", "broad_improvement") and not any(

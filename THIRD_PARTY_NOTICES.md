@@ -19,6 +19,8 @@ translated and narrowed to Salla stores.
   - `product/product-feedback-synthesizer.md` → customer intelligence specialist
   - `paid-media/paid-media-tracking-specialist.md` (by John Williams, @itallstartedwithaidea) → tracking specialist
   - `paid-media/paid-media-auditor.md`, `paid-media/paid-media-ppc-strategist.md`, `paid-media/paid-media-search-query-analyst.md`, `paid-media/paid-media-creative-strategist.md`, `paid-media/paid-media-paid-social-strategist.md` (by John Williams, @itallstartedwithaidea) → ads specialists
+  - `marketing/marketing-email-strategist.md` → retention specialist
+  - `specialized/business-strategist.md` → business strategist
 
 ```
 MIT License

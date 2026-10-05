@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from nitaaq import __version__  # noqa: E402
 from nitaaq import activation, capabilities, errors, exports, geo, gsc, products, redact, remediation, reports, seo_audit, tracking, visibility, writes  # noqa: E402
-from nitaaq import ads, approvals, contracts, cro, customer_intel, evidence, findings, growth, metrics, pricing, registry, review, routing, seo_team, state  # noqa: E402
+from nitaaq import ads, approvals, contracts, retention, strategy, cro, customer_intel, evidence, findings, growth, metrics, pricing, registry, review, routing, seo_team, state  # noqa: E402
 
 
 def _out(obj):
@@ -712,6 +712,62 @@ def cmd_ads_copy(a):
     _out(ads.rsa_check(d.get("headlines", []), d.get("descriptions", []), facts=_load(a.facts) if a.facts else d.get("facts")))
 
 
+def _text(a):
+    return Path(a.text_file).read_text(encoding="utf-8") if a.text_file else (a.text or "")
+
+
+def cmd_retention(a):
+    store = evidence.EvidenceStore(a.root, a.store_id)
+    if a.action == "check-message":
+        _out(retention.check_message(_text(a), a.channel, facts=_load(a.facts) if a.facts else None))
+        return
+    ev, orders = _evidence_or_file(store, a.store_id, a.orders_evidence, a.orders, "orders.list", a.orders_total)
+    if ev is None:
+        raise ValueError("pass --orders or --orders-evidence")
+    seg = retention.segments(orders, as_of=a.as_of or date.today().isoformat())
+    if a.action == "segments":
+        f = retention.segments_finding(seg, ev)
+        if a.md or a.out:
+            _finish(a, [f], [], store, "مين عملائي اللي أحتاج أرجعهم؟")
+            return
+        _out({"segments": {k: {kk: vv for kk, vv in v.items() if kk != "ids"} for k, v in seg["segments"].items()},
+              "flags": seg["flags"], "findings": [f], "review": review.review_all([f], store)})
+        return
+    if not a.customers:
+        raise ValueError("pass --customers (with recorded consent) for an audience")
+    aud = retention.audience(seg, a.segment, _records(a.customers), a.channel, vip_only=a.vip_only)
+    out = {"audience": {k: v for k, v in aud.items() if k != "eligible_ids"}}
+    if a.action == "propose":
+        text = _text(a)
+        chk = retention.check_message(text, a.channel, facts=_load(a.facts) if a.facts else None)
+        out["message_check"] = chk
+        if chk["issues"]:
+            out["proposal"] = None
+            out["note_ar"] = "صحح المسودة أولاً؛ ما نجهز اقتراح إرسال لنص فيه ملاحظات."
+        else:
+            out["proposal"] = retention.send_proposal(aud, text, store_id=a.store_id)
+    _out(out)
+
+
+def cmd_send_gate(a):
+    ap = approvals.ApprovalStore.for_store(a.root, a.store_id)
+    _out(retention.send_gate(ap, a.approval_id, store_id=a.store_id, channel=a.channel, text=_text(a),
+                             recipient_ids=_list(a.recipients) or [], customers_now=_records(a.customers),
+                             sender_available=a.sender_available))
+
+
+def cmd_strategy(a):
+    store = evidence.EvidenceStore(a.root, a.store_id)
+    fs = [f for path in a.findings.split(",") for f in _findings(path.strip())]
+    rv = review.review_all(fs, store)
+    plan = strategy.synthesize(fs, rv)
+    issues = strategy.check_plan(plan, fs, rv) if plan["status"] == "ok" else []
+    if a.md:
+        print(strategy.plan_markdown_ar(plan))
+        return
+    _out({"plan": plan, "plan_issues": issues, "review": rv})
+
+
 def cmd_report(a):
     plan = _load(a.plan) if a.plan else {}
     fs = _findings(a.findings)
@@ -885,6 +941,26 @@ def main(argv=None):
     s = sub.add_parser("ads-copy", help="check draft ad copy against limits and store facts")
     s.add_argument("--copy", required=True, help="JSON {headlines: [...], descriptions: [...], facts?: {...}}")
     s.add_argument("--facts"); s.set_defaults(f=cmd_ads_copy)
+
+    s = sub.add_parser("retention", help="customer segments, consent-filtered audience, message checks, send proposal")
+    s.add_argument("action", choices=["segments", "audience", "check-message", "propose"])
+    s.add_argument("--store-id", required=True); s.add_argument("--orders"); s.add_argument("--orders-evidence")
+    s.add_argument("--orders-total", type=int); s.add_argument("--as-of"); s.add_argument("--customers", help="JSON with recorded consent")
+    s.add_argument("--segment", choices=list(retention.SEGMENT_AR)); s.add_argument("--vip-only", action="store_true")
+    s.add_argument("--channel", choices=list(retention.CHANNELS), default="whatsapp")
+    s.add_argument("--text"); s.add_argument("--text-file"); s.add_argument("--facts")
+    s.add_argument("--question"); s.add_argument("--out"); s.add_argument("--md", action="store_true")
+    s.add_argument("--root", default=".nitaaq"); s.set_defaults(f=cmd_retention)
+    s = sub.add_parser("send-gate", help="who may receive an approved message now (does not send)")
+    s.add_argument("--store-id", required=True); s.add_argument("--approval-id", required=True)
+    s.add_argument("--channel", choices=list(retention.CHANNELS), required=True)
+    s.add_argument("--text"); s.add_argument("--text-file"); s.add_argument("--recipients", required=True)
+    s.add_argument("--customers", required=True, help="customers read just now, with consent")
+    s.add_argument("--sender-available", action="store_true", help="an authorized sending tool exists in this session")
+    s.add_argument("--root", default=".nitaaq"); s.set_defaults(f=cmd_send_gate)
+    s = sub.add_parser("strategy", help="priorities from reviewed findings of two or more specialists")
+    s.add_argument("--store-id", required=True); s.add_argument("--findings", required=True, help="comma-separated --out files")
+    s.add_argument("--md", action="store_true"); s.add_argument("--root", default=".nitaaq"); s.set_defaults(f=cmd_strategy)
 
     s = sub.add_parser("reconcile", help="Salla orders vs a destination's purchases/conversions")
     s.add_argument("--store-id", required=True); s.add_argument("--period", required=True, help="YYYY-MM-DD,YYYY-MM-DD")
