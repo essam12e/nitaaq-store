@@ -1,0 +1,17 @@
+{
+  "description": "Nitaaq write gate: Salla store writes need a matching merchant approval armed for the exact call.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "mcp__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/write_gate.py\"",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

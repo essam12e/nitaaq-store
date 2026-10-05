@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from nitaaq import __version__  # noqa: E402
 from nitaaq import activation, capabilities, errors, exports, geo, gsc, products, redact, remediation, reports, seo_audit, tracking, visibility, writes  # noqa: E402
-from nitaaq import ads, approvals, contracts, retention, strategy, cro, customer_intel, evidence, findings, growth, metrics, pricing, registry, review, routing, seo_team, state  # noqa: E402
+from nitaaq import ads, approvals, contracts, gate, retention, strategy, cro, customer_intel, evidence, findings, growth, metrics, pricing, registry, review, routing, seo_team, state  # noqa: E402
 
 
 def _out(obj):
@@ -348,6 +348,20 @@ def cmd_approvals(a):
         _out({"revoked": st.revoke(a.id)})
     else:
         _out(st.all())
+
+
+def cmd_gate(a):
+    if a.sub == "arm":
+        _out(gate.arm(a.root, a.store_id, a.id, a.op, _load(a.items), _load(a.fresh) if a.fresh else None,
+                      a.tool, _load(a.input), account_id=a.account_id, ttl_minutes=a.ttl_minutes))
+    elif a.sub == "disarm":
+        _out({"disarmed": gate.disarm(a.root, a.token)})
+    elif a.sub == "classify":
+        cmap = _load(a.map) if a.map else None
+        _out(gate.classify(a.tool, _load(a.input) if a.input else {}, cmap))
+    else:
+        from nitaaq.locks import read_json
+        _out(read_json(gate.gate_path(a.root)))
 
 
 def cmd_state(a):
@@ -861,6 +875,11 @@ def main(argv=None):
     s.add_argument("--items", help="JSON [{entity_id, before, after}]"); s.add_argument("--fresh", help="JSON {entity_id: current object}")
     s.add_argument("--proposal"); s.add_argument("--words"); s.add_argument("--ttl-hours", type=float, default=24)
     s.add_argument("--root", default=".nitaaq"); s.set_defaults(f=cmd_approvals)
+    s = sub.add_parser("gate", help="arm the Claude Code write gate for one exact tool call")
+    s.add_argument("sub", choices=["arm", "disarm", "classify", "list"]); s.add_argument("--store-id"); s.add_argument("--account-id")
+    s.add_argument("--id", help="approval id"); s.add_argument("--op"); s.add_argument("--items"); s.add_argument("--fresh")
+    s.add_argument("--tool"); s.add_argument("--input", help="JSON: the exact tool input"); s.add_argument("--token"); s.add_argument("--map")
+    s.add_argument("--ttl-minutes", type=float, default=gate.ARM_TTL_MINUTES); s.add_argument("--root", default=".nitaaq"); s.set_defaults(f=cmd_gate)
     s = sub.add_parser("state"); s.add_argument("sub", choices=["new", "stage", "move", "review-mode", "cancel", "resume", "show"])
     s.add_argument("--store-id", required=True); s.add_argument("--run"); s.add_argument("--question")
     s.add_argument("--mode", default="sequential"); s.add_argument("--cmap-version"); s.add_argument("--agent"); s.add_argument("--depends")

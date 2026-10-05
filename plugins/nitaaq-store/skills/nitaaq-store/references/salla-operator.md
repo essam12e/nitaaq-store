@@ -21,6 +21,9 @@ reads evidence for the team and performs approved writes. Everything in
    `approvals check --store-id <id> --id <ap_...> --op <operation> --items items.json --fresh fresh.json`.
    Any reason (`payload_changed`, `stale_snapshot`, `expired`, `used`, `wrong_store`...) stops the write; show the Arabic reason and ask again.
 5. Ledger per item: `ledger begin --store-id <id> --approval-id <ap_...> --op ... --entity ... --payload ...`, write, `ledger finish`. After an ambiguous failure, reconcile by reading; never blind-retry.
+   On Claude Code with the plugin, a PreToolUse hook (the write gate) denies any Salla write call that was not armed. Right before each write call, save its exact input to a file and arm it:
+   `gate arm --store-id <id> --id <ap_...> --op <operation> --items items.json --fresh fresh.json --tool <exact tool name> --input call.json`.
+   Arming re-runs the approval check and needs the input to carry each entity id and approved value. The token is for that tool and that exact input, once, for 10 minutes. Call the tool with the same input; any change is denied. A denial is not an error to work around: show the merchant the reason. Never set `NITAAQ_WRITE_GATE`.
 6. Verify by readback, then `approvals use --id <ap_...>` (single use).
 
 An approval for one store, account, operation or set of values never
