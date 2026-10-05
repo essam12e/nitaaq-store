@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import re
 
-from . import contracts, cro, customer_intel, growth, metrics, pricing, seo_team
+from . import contracts, cro, customer_intel, growth, metrics, pricing, seo_team, tracking
 from .arabic import normalize
 from .evidence import CrossStoreError, EvidenceStore
 from .writes import same_value
@@ -33,7 +33,10 @@ DARK_PATTERN = re.compile(r"(اضف|أضف|حط|ضع|استخدم|فعّل|فع�
                           r"تقييمات (?:إضافية|اضافية|وهمية|مكتوبة)|ندرة|fake urgency|countdown)", re.I)
 # metric -> evidence kinds it cannot exist without
 METRIC_NEEDS = {"conversion_rate": {"traffic", "analytics"}, "funnel": {"traffic", "analytics"},
-                "cac": {"ads"}, "roas": {"ads"}}
+                "cac": {"ads"}, "roas": {"ads"}, "tracking_reconciliation": {"analytics", "ads"}}
+# "Tracking is broken" needs a captured real purchase that fired no purchase event (reconcile status event_missing).
+TRACKING_WORD = re.compile(r"(تتبع|التتبع|بكسل|البكسل|pixel|ga4|capi|tracking)", re.I)
+TRACKING_FAULT = re.compile(r"(خربان|خربانه|خربانة|معطل|متعطل|عطل|لا يعمل|ما يشتغل|مايشتغل|broken|not working)", re.I)
 PARTIAL_WORDS = ("جزئي", "جزئية", "ناقص", "غير مكتمل", "غير معروفة الاكتمال", "partial")
 
 ISSUES_AR = {
@@ -55,11 +58,13 @@ ISSUES_AR = {
     "dark_pattern": "اقتراح استعجال أو ندرة أو تقييمات غير حقيقية؛ ممنوع.",
     "metric_without_data": "مقياس لا يمكن حسابه بدون بياناته (مثل معدل التحويل بدون زيارات).",
     "small_sample_not_disclosed": "العينة صغيرة ولم يُذكر ذلك.",
+    "tracking_fault_unsupported": "حكم بأن التتبع معطل بدون رصد عملية شراء حقيقية لم يُرسل فيها الحدث؛ الفرق دليل للتحقيق فقط.",
+    "totals_not_disclosed": "مقارنة مجاميع بدون ذكر أنها لا تثبت أي طلب مفقود.",
 }
 BLOCKING = {"schema", "wrong_store", "evidence_missing", "number_mismatch", "invalid_comparison", "unsupported_cause",
             "high_confidence_cause", "unsourced_benchmark", "guarantee", "partial_not_disclosed",
             "unsupported_forecast", "inferred_elasticity", "dark_pattern", "metric_without_data",
-            "small_sample_not_disclosed"}
+            "small_sample_not_disclosed", "tracking_fault_unsupported", "totals_not_disclosed"}
 
 
 def _issue(code: str, detail: str = "") -> dict:
@@ -122,6 +127,9 @@ def _recompute(calc: dict, store: EvidenceStore):
         return None, c["similarity"] if c else None, None, ev
     if calc["fn"] == "review_themes":
         return None, customer_intel.recompute(records, calc), None, ev
+    if calc["fn"] == "tracking_reconcile":
+        _, conv = store.load(calc["platform_evidence"])
+        return None, tracking.recompute(records, conv, calc), None, ev
     raise ValueError(calc["fn"])
 
 
@@ -187,6 +195,12 @@ def review_finding(f: dict, store: EvidenceStore, mode: str = "self_check") -> d
         n = next((o.get("current") for o in f.get("observed") or [] if (o.get("calc") or {}).get("field") == "sample_size"), None)
         if n is not None and int(str(n)) < customer_intel.SMALL_SAMPLE and "عينة صغيرة" not in text:
             issues.append(_issue("small_sample_not_disclosed", str(n)))
+    truth = _tracking_truth(f, store)
+    interp = f.get("interpretation_ar", "")
+    if TRACKING_WORD.search(interp) and TRACKING_FAULT.search(interp) and (truth or {}).get("status") != "event_missing":
+        issues.append(_issue("tracking_fault_unsupported"))
+    if truth and truth["mode"] == "totals" and "لا تثبت أي طلب مفقود" not in text:
+        issues.append(_issue("totals_not_disclosed"))
     need = METRIC_NEEDS.get(f.get("metric"))
     if need and not any(e.get("kind") in need for e in evs):
         issues.append(_issue("metric_without_data", f.get("metric")))
@@ -194,6 +208,20 @@ def review_finding(f: dict, store: EvidenceStore, mode: str = "self_check") -> d
     status = "fail" if any(i["code"] in ("schema", "wrong_store", "evidence_missing", "number_mismatch") for i in issues) \
         else ("revise" if blocking else "pass")
     return {"finding_id": f.get("finding_id"), "status": status, "issues": issues, "mode": mode}
+
+
+def _tracking_truth(f: dict, store: EvidenceStore) -> dict | None:
+    """The reconciliation recomputed from the finding's own evidence, so its status and mode are not taken on trust."""
+    calc = next((o["calc"] for o in f.get("observed") or []
+                 if isinstance(o.get("calc"), dict) and o["calc"].get("fn") == "tracking_reconcile"), None)
+    if not calc:
+        return None
+    try:
+        _, orders = store.load(calc["evidence"])
+        _, conv = store.load(calc["platform_evidence"])
+        return tracking.reconcile_from_calc(orders, conv, calc)
+    except (ValueError, KeyError, FileNotFoundError, CrossStoreError):
+        return None
 
 
 def review_all(findings: list[dict], store: EvidenceStore, mode: str = "self_check") -> dict:

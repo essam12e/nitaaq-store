@@ -247,7 +247,7 @@ class RoutingTests(unittest.TestCase):
         self.assertEqual(st["growth"], "run")
         self.assertEqual(st["cro"], "blocked")
         self.assertEqual(st["seo_geo"], "blocked")  # active since phase 3; needs public pages
-        self.assertEqual(st["tracking"], "existing_service")
+        self.assertEqual(st["tracking"], "blocked")  # active since phase 4; needs pages or destination data
         self.assertLessEqual(len(broad["specialists_to_run"]), registry.limits()["max_specialists_broad"])
         ads = routing.route("أوقف الحملات اللي ما تجيب مبيعات", {"orders.list"})
         self.assertEqual(ads["specialists_to_run"], [])

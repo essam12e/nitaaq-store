@@ -72,8 +72,8 @@ INTENT_AGENTS = {
 }
 
 # Existing services that keep working exactly as before (not routed to a new specialist yet).
-EXISTING_SERVICE = {"seo": "references/seo-geo.md", "tracking": "references/store-audit.md"}
-EXISTING_AGENT_SERVICE = {"seo_geo": "references/seo-geo.md", "tracking": "references/store-audit.md"}
+EXISTING_SERVICE = {"seo": "references/seo-geo.md"}
+EXISTING_AGENT_SERVICE = {"seo_geo": "references/seo-geo.md"}
 
 # Conditional routing after the first stage. signal -> (agent, Arabic reason)
 SIGNAL_ROUTES = {
@@ -224,6 +224,7 @@ def _operator_reads(intent: str, available: set[str]) -> list[str]:
         "cro": ["products.get", "carts.abandoned"],
         "reviews": ["reviews.list", "orders.list"],
         "seo": ["store.info", "products.list"],
+        "tracking": ["orders.list"],
         "simple_read": [],
     }.get(intent, [])
     return [w for w in wanted if w in available]

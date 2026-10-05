@@ -17,7 +17,8 @@ translated and narrowed to Salla stores.
   - `product/product-behavioral-nudge-engine.md` → conversion specialist (weak match, mostly custom)
   - `marketing/marketing-seo-specialist.md`, `marketing/marketing-ai-citation-strategist.md` → SEO/GEO specialist
   - `product/product-feedback-synthesizer.md` → customer intelligence specialist
-- Planned adaptations include the paid-media files authored by John Williams (@itallstartedwithaidea).
+  - `paid-media/paid-media-tracking-specialist.md` (by John Williams, @itallstartedwithaidea) → tracking specialist
+- Planned adaptations include the other paid-media files authored by John Williams (@itallstartedwithaidea).
 
 ```
 MIT License
