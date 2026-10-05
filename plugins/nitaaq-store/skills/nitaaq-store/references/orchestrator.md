@@ -20,7 +20,7 @@ Read each stage's `status`:
 - `run`: the specialist is active and its required data exists.
 - `blocked`: active but its data is missing. Say what is missing in one line.
 - `not_available_yet`: the specialist is planned for a later phase. Say so honestly. Never imitate it.
-- `existing_service`: use the existing reference it points to (store audit for tracking, until phase 4).
+- `existing_service`: use the existing reference it points to. No current specialist uses it; it stays for services not yet wrapped as a stage.
 
 Simple questions get one specialist at most. Broad questions get up to the
 `limits.max_specialists_broad` in `assets/agent-registry.json`. Specialists
@@ -48,10 +48,11 @@ Active specialists and their commands:
 | [Conversion](agents/cro.md) | public product pages (carts optional) | `cro` |
 | [SEO/GEO](agents/seo-geo.md) | public pages (Search Console optional) | `seo-team`, `cannibalization` (plus the existing SEO/GEO commands) |
 | [Customer intelligence](agents/customer-intelligence.md) | reviews or complaints | `reviews` |
+| [Tracking](agents/tracking.md) | public pages for levels 1–2; orders plus a GA4 or ads export for reconciliation | `tracking`, `reconcile` |
 
 Signals from one stage start a follow-up: `price_changed`/`discount_heavy` go to pricing,
 `funnel_drop`/`abandoned_carts_up` to conversion, `traffic_available` to growth,
-`stock_out` to the operator, `complaints_up` to customer intelligence.
+`stock_out` to the operator, `complaints_up` to customer intelligence, `tracking_discrepancy` to tracking.
 
 ## Native subagents (optional)
 

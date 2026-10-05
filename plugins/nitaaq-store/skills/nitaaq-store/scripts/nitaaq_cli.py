@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from datetime import date
 from decimal import Decimal
 from pathlib import Path
 
@@ -618,6 +619,42 @@ def cmd_reviews(a):
     _out({"findings": fs, "review": review.review_all(fs, store), **extra})
 
 
+def cmd_reconcile(a):
+    store = evidence.EvidenceStore(a.root, a.store_id)
+    oev, orders = _evidence_or_file(store, a.store_id, a.orders_evidence, a.orders, "orders.list", a.orders_total)
+    if oev is None:
+        raise ValueError("pass --orders or --orders-evidence")
+    if a.conversions_evidence:
+        pev, conv = store.load(a.conversions_evidence)
+    elif a.conversions:
+        if a.conversions.lower().endswith(".csv"):
+            _, conv = exports.read_csv(a.conversions)
+        else:
+            conv = _records(a.conversions)
+        conv = [{**r, "id": f"row-{i}"} for i, r in enumerate(conv)]  # keep repeated transaction ids: they are findings
+        pev, conv = evidence.make_evidence(a.store_id, {"kind": "export", "operation": f"export.{a.destination}",
+                                                        "tool": Path(a.conversions).name, "platform": a.platform},
+                                           conv, records_total=a.conversions_total, kind=a.destination)
+        store.save(pev, conv)
+    else:
+        raise ValueError("pass --conversions or --conversions-evidence")
+    fault = None
+    if a.fault_evidence:
+        fe = _load(a.fault_evidence)
+        fault = {k: fe.get(k) for k in ("level", "purchase_event_observed", "purchase_flow_captured")}
+    params = {"period": _pair(a.period), "destination": a.destination, "platform": a.platform, "date_basis": a.date_basis,
+              "window_days": a.window_days, "lag_days": a.lag_days, "as_of": a.as_of or date.today().isoformat(),
+              "store_currency": a.currency, "tolerance_pct": a.tolerance,
+              "conversion_actions": a.actions.split(",") if a.actions else None, "fault_evidence": fault}
+    params = {k: v for k, v in params.items() if v is not None}
+    res = tracking.reconcile_from_calc(orders, conv, params)
+    f = tracking.reconciliation_finding(res, oev, pev, params)
+    if a.md or a.out:
+        _finish(a, [f], [], store, "هل التتبع يسجل طلباتي صح؟")
+        return
+    _out({"reconciliation": res, "findings": [f], "review": review.review_all([f], store)})
+
+
 def cmd_report(a):
     plan = _load(a.plan) if a.plan else {}
     fs = _findings(a.findings)
@@ -775,6 +812,21 @@ def main(argv=None):
     s.add_argument("--evidence-id"); s.add_argument("--total", type=int); s.add_argument("--current"); s.add_argument("--baseline")
     s.add_argument("--question"); s.add_argument("--out"); s.add_argument("--md", action="store_true")
     s.add_argument("--root", default=".nitaaq"); s.set_defaults(f=cmd_reviews)
+
+    s = sub.add_parser("reconcile", help="Salla orders vs a destination's purchases/conversions")
+    s.add_argument("--store-id", required=True); s.add_argument("--period", required=True, help="YYYY-MM-DD,YYYY-MM-DD")
+    s.add_argument("--orders"); s.add_argument("--orders-evidence"); s.add_argument("--orders-total", type=int)
+    s.add_argument("--conversions", help="destination export (CSV or JSON)"); s.add_argument("--conversions-evidence")
+    s.add_argument("--conversions-total", type=int)
+    s.add_argument("--destination", choices=["analytics", "ads"], default="analytics"); s.add_argument("--platform", default="ga4")
+    s.add_argument("--date-basis", choices=["conversion", "click"], default="conversion")
+    s.add_argument("--window-days", type=int); s.add_argument("--lag-days", type=int)
+    s.add_argument("--as-of", help="date the destination data was exported (default today)")
+    s.add_argument("--currency", default="SAR"); s.add_argument("--tolerance", type=int, default=tracking.DEFAULT_TOLERANCE_PCT)
+    s.add_argument("--actions", help="conversion action names counted as purchase, comma separated")
+    s.add_argument("--fault-evidence", help="JSON: level, purchase_event_observed, purchase_flow_captured for a real authorized purchase")
+    s.add_argument("--question"); s.add_argument("--out"); s.add_argument("--md", action="store_true")
+    s.add_argument("--root", default=".nitaaq"); s.set_defaults(f=cmd_reconcile)
 
     a = p.parse_args(argv)
     try:

@@ -680,7 +680,7 @@
   {
    "id": "tracking",
    "kind": "specialist",
-   "status": "planned",
+   "status": "active",
    "phase": 4,
    "label_ar": "التتبع والقياس",
    "routing": {
@@ -695,19 +695,102 @@
     "required_any": [
      [
       "public:pages"
+     ],
+     [
+      "orders.list",
+      "export:analytics"
+     ],
+     [
+      "orders.list",
+      "external:analytics"
+     ],
+     [
+      "orders.list",
+      "export:ads"
+     ],
+     [
+      "orders.list",
+      "external:ads"
+     ],
+     [
+      "export:orders",
+      "export:analytics"
+     ],
+     [
+      "export:orders",
+      "export:ads"
      ]
     ],
     "optional": [
      "external:analytics",
      "external:ads",
-     "export:ads"
+     "export:ads",
+     "export:analytics"
     ]
    },
    "upstream": [
     {
-     "path": "paid-media/paid-media-tracking-specialist.md"
+     "path": "paid-media/paid-media-tracking-specialist.md",
+     "use": "Pixel+CAPI dedupe by event_id, primary vs secondary conversions, transaction_id/value/currency completeness; a discrepancy is explained by windows and timing before calling it a fault; rejected: tag-fire SLAs, fixed discrepancy targets, LinkedIn"
     }
-   ]
+   ],
+   "direct_writes": "prohibited",
+   "input_schema": "schemas/task-envelope.json",
+   "output_schema": "schemas/finding.json",
+   "review": {
+    "required_when": [
+     "priority:high",
+     "claims_cause",
+     "action_proposal_sensitive"
+    ],
+    "reviewer": "reviewer"
+   },
+   "fallback": "sequential",
+   "version": "1.0.0",
+   "mission": "Establish tracking evidence levels from public pages and network logs, and reconcile Salla orders with a destination's purchases or conversions by transaction id or by totals, separating explained gaps from gaps to investigate.",
+   "reference": "references/agents/tracking.md",
+   "allowed_reads": [
+    "orders.list",
+    "orders.get"
+   ],
+   "evidence_rules": [
+    "destination_evidence_required",
+    "window_and_lag_stated",
+    "totals_mode_disclosed",
+    "cancelled_excluded"
+   ],
+   "uncertainty_rules": [
+    "gap_is_a_lead_not_a_fault",
+    "fault_needs_level2_on_real_purchase",
+    "no_fake_purchases"
+   ],
+   "budget": {
+    "max_tool_calls": 20,
+    "max_evidence_records_in_context": 2000,
+    "max_minutes": 10
+   },
+   "native": {
+    "name": "nitaaq-tracking",
+    "description": "Nitaaq Store internal tracking specialist. Reads saved page, network-log and order/destination evidence, establishes tracking evidence levels and reconciles Salla orders with GA4 or ad-platform conversions. Read-only; never calls store tools, never sends or edits events. Use only when the nitaaq-store skill delegates a tracking stage.",
+    "claude_code": {
+     "tools": [
+      "Read",
+      "Grep",
+      "Glob",
+      "Bash"
+     ],
+     "disallowedTools": [
+      "Write",
+      "Edit",
+      "NotebookEdit",
+      "Agent",
+      "mcp__*"
+     ]
+    },
+    "codex": {
+     "sandbox_mode": "read-only"
+    }
+   }
   },
   {
    "id": "paid_media_auditor",
