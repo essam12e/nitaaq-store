@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import re
 
-from . import contracts, cro, customer_intel, growth, metrics, pricing, seo_team, tracking
+from . import ads, contracts, cro, customer_intel, growth, metrics, pricing, seo_team, tracking
 from .arabic import normalize
 from .evidence import CrossStoreError, EvidenceStore
 from .writes import same_value
@@ -33,7 +33,13 @@ DARK_PATTERN = re.compile(r"(اضف|أضف|حط|ضع|استخدم|فعّل|فع�
                           r"تقييمات (?:إضافية|اضافية|وهمية|مكتوبة)|ندرة|fake urgency|countdown)", re.I)
 # metric -> evidence kinds it cannot exist without
 METRIC_NEEDS = {"conversion_rate": {"traffic", "analytics"}, "funnel": {"traffic", "analytics"},
-                "cac": {"ads"}, "roas": {"ads"}, "tracking_reconciliation": {"analytics", "ads"}}
+                "cac": {"ads"}, "roas": {"ads"}, "tracking_reconciliation": {"analytics", "ads"},
+                **{f"ads_{k}": {"ads"} for k in ads.ANALYSES}}
+ROAS_WORD = re.compile(r"(roas|العائد على الإنفاق|العائد على الانفاق|عائد الإنفاق|عائد الانفاق)", re.I)
+PROFIT_CLAIM = re.compile(r"(مربح|مربحة|ربحانة|ربحانه|تربح|profitable)", re.I)
+# Ad account changes are proposals; a finding never says they were made.
+ADS_EXECUTED = re.compile(r"(أوقفنا|اوقفنا|أوقفت الحمل|اوقفت الحمل|أضفنا الكلمات|اضفنا الكلمات|طبقنا|غيرنا الميزانية|"
+                          r"غيّرنا الميزانية|رفعنا الميزانية|نزلنا الميزانية)", re.I)
 # "Tracking is broken" needs a captured real purchase that fired no purchase event (reconcile status event_missing).
 TRACKING_WORD = re.compile(r"(تتبع|التتبع|بكسل|البكسل|pixel|ga4|capi|tracking)", re.I)
 TRACKING_FAULT = re.compile(r"(خربان|خربانه|خربانة|معطل|متعطل|عطل|لا يعمل|ما يشتغل|مايشتغل|broken|not working)", re.I)
@@ -60,11 +66,14 @@ ISSUES_AR = {
     "small_sample_not_disclosed": "العينة صغيرة ولم يُذكر ذلك.",
     "tracking_fault_unsupported": "حكم بأن التتبع معطل بدون رصد عملية شراء حقيقية لم يُرسل فيها الحدث؛ الفرق دليل للتحقيق فقط.",
     "totals_not_disclosed": "مقارنة مجاميع بدون ذكر أنها لا تثبت أي طلب مفقود.",
+    "roas_as_profit": "العائد على الإنفاق الإعلاني مقدم كربح؛ الربحية تحتاج الهامش.",
+    "claimed_ads_execution": "يقول إن تغييراً نُفذ في الحساب الإعلاني؛ تغييرات الإعلانات اقتراحات بموافقة فقط.",
 }
 BLOCKING = {"schema", "wrong_store", "evidence_missing", "number_mismatch", "invalid_comparison", "unsupported_cause",
             "high_confidence_cause", "unsourced_benchmark", "guarantee", "partial_not_disclosed",
             "unsupported_forecast", "inferred_elasticity", "dark_pattern", "metric_without_data",
-            "small_sample_not_disclosed", "tracking_fault_unsupported", "totals_not_disclosed"}
+            "small_sample_not_disclosed", "tracking_fault_unsupported", "totals_not_disclosed",
+            "roas_as_profit", "claimed_ads_execution"}
 
 
 def _issue(code: str, detail: str = "") -> dict:
@@ -127,6 +136,8 @@ def _recompute(calc: dict, store: EvidenceStore):
         return None, c["similarity"] if c else None, None, ev
     if calc["fn"] == "review_themes":
         return None, customer_intel.recompute(records, calc), None, ev
+    if calc["fn"] == "ads":
+        return None, ads.recompute(records, calc), None, ev
     if calc["fn"] == "tracking_reconcile":
         _, conv = store.load(calc["platform_evidence"])
         return None, tracking.recompute(records, conv, calc), None, ev
@@ -201,6 +212,10 @@ def review_finding(f: dict, store: EvidenceStore, mode: str = "self_check") -> d
         issues.append(_issue("tracking_fault_unsupported"))
     if truth and truth["mode"] == "totals" and "لا تثبت أي طلب مفقود" not in text:
         issues.append(_issue("totals_not_disclosed"))
+    if ROAS_WORD.search(interp) and PROFIT_CLAIM.search(interp) and not f.get("margin_ref"):
+        issues.append(_issue("roas_as_profit"))
+    if ADS_EXECUTED.search(interp):
+        issues.append(_issue("claimed_ads_execution"))
     need = METRIC_NEEDS.get(f.get("metric"))
     if need and not any(e.get("kind") in need for e in evs):
         issues.append(_issue("metric_without_data", f.get("metric")))

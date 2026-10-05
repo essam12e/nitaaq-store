@@ -71,6 +71,27 @@ INTENT_AGENTS = {
     "operation": [],
 }
 
+# Within the ads intent, the specialist the message is about goes first (one specialist for a simple question).
+ADS_FOCUS: list[tuple[str, list[str]]] = [
+    ("search_query_analyst", ["كلمات سلبيه", "الكلمات السلبيه", "مصطلحات البحث", "كلمات البحث", "search terms", "negative"]),
+    ("ad_creative", ["نص الاعلان", "نصوص الاعلان", "نصوص اعلان", "عناوين الاعلان", "اكتب اعلان", "كريتف", "كرييتف",
+                     "تصميم الاعلان", "الاعلان مل", "creative"]),
+    ("paid_social", ["ميتا", "فيسبوك", "انستقرام", "انستغرام", "سناب", "تيك توك", "تيكتوك", "سوشال", "meta", "snapchat",
+                     "tiktok"]),
+    ("ppc", ["google ads", "قوقل ادز", "جوجل ادز", "اعلانات قوقل", "اعلانات جوجل", "pmax", "شوبنق", "shopping"]),
+]
+_ADS_FOCUS_N = [(a, [normalize(p) for p in ps]) for a, ps in ADS_FOCUS]
+
+
+ADS_EVIDENCE = {"external:ads", "export:ads", "external:google_ads", "export:google_ads", "export:search_terms",
+                "export:social_ads", "external:meta", "external:tiktok", "external:snapchat"}
+
+
+def ads_focus(message: str) -> str | None:
+    t = normalize(message)
+    return next((a for a, ps in _ADS_FOCUS_N if _has(t, ps)), None)
+
+
 # Existing services that keep working exactly as before (not routed to a new specialist yet).
 EXISTING_SERVICE = {"seo": "references/seo-geo.md"}
 EXISTING_AGENT_SERVICE = {"seo_geo": "references/seo-geo.md"}
@@ -149,6 +170,8 @@ def available_from_map(cmap: dict | None, exports: list[str] | None = None, publ
         if op.get("status") == "mapped":
             out.add(op_id)
     out |= {f"export:{e}" for e in exports or []}
+    if any(e in ("google_ads", "social_ads", "search_terms") for e in exports or []):
+        out.add("export:ads")
     if public:
         out.add("public:pages")
     for e in external or []:
@@ -179,7 +202,18 @@ def route(message: str, available: set[str], reg: dict | None = None) -> dict:
     reg = reg or registry.load()
     lim = registry.limits(reg)
     c = classify(message)
-    stages = [_stage(a, available, reg) for a in INTENT_AGENTS.get(c["intent"], [])]
+    agents = list(INTENT_AGENTS.get(c["intent"], []))
+    focus = ads_focus(message) if c["intent"] == "ads" else None
+    if focus:
+        agents.remove(focus)
+        agents.insert(0, focus)
+    stages = [_stage(a, available, reg) for a in agents]
+    if c["intent"] == "ads" and focus != "ad_creative" and not available & ADS_EVIDENCE:
+        # without ads data no ads specialist runs; copy drafts from products run only when asked for
+        for s in stages:
+            if s["agent"] == "ad_creative" and s["status"] == "run":
+                s.update(status="blocked", missing=["external:ads|export:ads"],
+                         reason_ar="لا توجد بيانات إعلانات؛ نكتب نصوص إعلانات من بيانات المنتجات فقط إذا طلبتها.")
     runnable = [s for s in stages if s["status"] == "run"]
     cap = lim["max_specialists_broad"] if c["intent"] == "broad_improvement" else lim["max_specialists_simple"]
     cap = min(cap, lim["max_specialists_absolute"])
@@ -205,7 +239,8 @@ def route(message: str, available: set[str], reg: dict | None = None) -> dict:
         "review_required": bool(runnable) and material,
         "existing_service": EXISTING_SERVICE.get(c["intent"]),
         "unknowns_ar": unknown,
-        "execution_path": "salla_operator_with_approval" if c["kind"] == "execution" else None,
+        "execution_path": ("ads_proposal_only" if c["intent"] == "ads" else "salla_operator_with_approval")
+        if c["kind"] == "execution" else None,
         "limits": {k: lim[k] for k in ("max_delegation_depth", "max_review_rounds", "max_stage_attempts", "stage_timeout_minutes")},
     }
     if c["intent"] in ("sales_change", "sales_report", "broad_improvement") and not any(

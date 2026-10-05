@@ -258,7 +258,7 @@ class RoutingTests(unittest.TestCase):
         by = {x["agent"]: x["status"] for x in f}
         self.assertEqual(by["salla_operator"], "run")
         self.assertEqual(by["pricing"], "blocked")
-        self.assertEqual(by["paid_media_auditor"], "not_available_yet")
+        self.assertEqual(by["paid_media_auditor"], "blocked")  # active since phase 5; no ads data here
 
 
 class ReviewTests(unittest.TestCase):
