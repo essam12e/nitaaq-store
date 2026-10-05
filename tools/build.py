@@ -21,6 +21,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CORE = ROOT / "plugins" / "nitaaq-store" / "skills" / "nitaaq-store"
 DIST = ROOT / "dist"
 ADAPTERS = ROOT / "adapters"
+sys.path.insert(0, str(ROOT / "tools"))
 
 SPEC_FIELDS = {"name", "description", "license", "compatibility", "metadata", "allowed-tools"}
 IGNORE = shutil.ignore_patterns("__pycache__", "*.pyc", ".nitaaq", ".DS_Store")
@@ -115,7 +116,7 @@ def validate(core: Path = CORE) -> list[str]:
     lines = text.count("\n") + 1
     if lines > 500:
         errors.append(f"SKILL.md has {lines} lines (keep under 500)")
-    for md in [skill, *sorted((core / "references").glob("*.md"))]:
+    for md in [skill, *sorted((core / "references").rglob("*.md"))]:
         for link in re.findall(r"\]\(((?!https?:)[^)#]+)\)", md.read_text(encoding="utf-8")):
             target = (md.parent / link).resolve()
             if not target.exists():
@@ -128,6 +129,23 @@ def validate(core: Path = CORE) -> list[str]:
                     errors.append(f"possible secret in {f.relative_to(core)}")
     if "نطاق للمتاجر | Nitaaq Store" not in text:
         errors.append("display name missing from SKILL.md")
+    errors += validate_team(core)
+    return errors
+
+
+def validate_team(core: Path = CORE) -> list[str]:
+    """Agent registry rules, schemas parse, and generated native agents are current."""
+    sys.path.insert(0, str(core / "scripts"))
+    from nitaaq import registry  # noqa: E402
+    errors = [f"agent registry: {e}" for e in registry.validate(skill_dir=core)]
+    for f in sorted((core / "assets" / "schemas").glob("*.json")):
+        try:
+            json.loads(f.read_text(encoding="utf-8"))
+        except ValueError as e:
+            errors.append(f"bad schema {f.name}: {e}")
+    if core == CORE:
+        import gen_agents  # noqa: E402
+        errors += gen_agents.check()
     return errors
 
 

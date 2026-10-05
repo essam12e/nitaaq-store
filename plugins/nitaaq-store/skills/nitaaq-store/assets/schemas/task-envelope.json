@@ -1,0 +1,95 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "nitaaq/task-envelope.json",
+ "title": "task-envelope",
+ "type": "object",
+ "required": [
+  "run_id",
+  "task_id",
+  "stage",
+  "store",
+  "question_ar",
+  "evidence_refs",
+  "constraints"
+ ],
+ "properties": {
+  "run_id": {
+   "type": "string"
+  },
+  "task_id": {
+   "type": "string"
+  },
+  "stage": {
+   "type": "string"
+  },
+  "store": {
+   "type": "object",
+   "required": [
+    "store_id"
+   ],
+   "properties": {
+    "store_id": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "timezone": {
+     "type": "string"
+    },
+    "currency": {
+     "type": "string"
+    }
+   },
+   "additionalProperties": true
+  },
+  "question_ar": {
+   "type": "string"
+  },
+  "periods": {
+   "type": "object",
+   "required": [],
+   "properties": {
+    "current": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     },
+     "minItems": 2,
+     "maxItems": 2
+    },
+    "baseline": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     },
+     "minItems": 2,
+     "maxItems": 2
+    }
+   },
+   "additionalProperties": true
+  },
+  "evidence_refs": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "capability_map_version": {
+   "type": [
+    "string",
+    "null"
+   ]
+  },
+  "budget": {
+   "type": "object"
+  },
+  "constraints": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  }
+ },
+ "additionalProperties": true
+}

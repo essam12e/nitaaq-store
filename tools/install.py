@@ -14,6 +14,13 @@ Safety rules:
     any skills directory, so the backup is not loaded as a second skill).
   - A directory named nitaaq-store that is NOT this skill is left untouched
     and the install stops.
+
+Optional native agents (--agents): copies the generated read-only
+specialist/reviewer definitions to
+  Claude Code  ~/.claude/agents/nitaaq-*.md   (or <project>/.claude/agents)
+  Codex        ~/.codex/agents/nitaaq-*.toml  (or <project>/.codex/agents)
+Only files that carry the gen_agents header are overwritten or removed. The
+plugin install of Claude Code already ships them; this is for skill installs.
 """
 
 from __future__ import annotations
@@ -29,6 +36,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
 import build  # noqa: E402
+import gen_agents  # noqa: E402
 
 SKILL = "nitaaq-store"
 MARKER = ".nitaaq-install.json"
@@ -96,6 +104,41 @@ def apply(p: dict, home: Path) -> dict:
     return {**p, "result": "installed", "backup": str(backup) if backup else None}
 
 
+def agent_dir(host: str, scope: str, project: Path | None, home: Path) -> Path:
+    base = {"claude-code": ".claude/agents", "codex": ".codex/agents"}[host]
+    root = home if scope == "user" else project
+    if root is None:
+        raise SystemExit("--project مطلوب مع --scope project")
+    return root / base
+
+
+def agent_sources(host: str) -> list[Path]:
+    src, suffix = {"claude-code": (gen_agents.CLAUDE_DIR, ".md"), "codex": (gen_agents.CODEX_DIR, ".toml")}[host]
+    return sorted(src.glob(f"nitaaq-*{suffix}"))
+
+
+def agents_action(host: str, scope: str, project: Path | None, home: Path, remove: bool, dry: bool) -> list[dict]:
+    """Install or remove our generated agent files; never touch a file we did not generate."""
+    out = []
+    d = agent_dir(host, scope, project, home)
+    for src in agent_sources(host):
+        dest = d / src.name
+        ours = dest.is_file() and not dest.is_symlink() and gen_agents.HEADER in dest.read_text(encoding="utf-8", errors="replace")
+        if dest.exists() and not ours:
+            out.append({"dest": str(dest), "result": "refused", "reason": "ملف بنفس الاسم ليس من نطاق؛ لن نلمسه."})
+        elif remove:
+            if ours and not dry:
+                dest.unlink()
+            out.append({"dest": str(dest), "result": ("dry_run_uninstall" if dry else "removed") if ours else "not_installed"})
+        elif dry:
+            out.append({"dest": str(dest), "result": "dry_run"})
+        else:
+            d.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, dest)
+            out.append({"dest": str(dest), "result": "installed"})
+    return out
+
+
 def uninstall(p: dict) -> dict:
     dest = Path(p["dest"])
     if not dest.exists():
@@ -115,6 +158,7 @@ def main(argv=None) -> int:
     ap.add_argument("--dry-run", action="store_true", help="اعرض الخطة بدون تنفيذ")
     ap.add_argument("--uninstall", action="store_true")
     ap.add_argument("--no-build", action="store_true")
+    ap.add_argument("--agents", action="store_true", help="ثبّت أيضاً الوكلاء المتخصصين الاختياريين (للقراءة فقط)")
     a = ap.parse_args(argv)
 
     if not a.no_build and not a.uninstall:
@@ -136,6 +180,11 @@ def main(argv=None) -> int:
         if r["result"] == "refused":
             code = 2
         results.append(r)
+        if a.agents:
+            for ar in agents_action(h, a.scope, project, a.home, a.uninstall, a.dry_run):
+                print(f"[agent] {ar['dest']}: {ar['result']} {ar.get('reason', '')}".rstrip())
+                if ar["result"] == "refused":
+                    code = 2
 
     names = {"claude-code": "Claude Code", "codex": "Codex"}
     for r in results:

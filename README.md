@@ -157,6 +157,14 @@ cd nitaaq-store
 
 ---
 
+## فريق التحليل
+
+للأسئلة اللي تحتاج تحليل (مثل «ليش المبيعات نازلة؟») يشتغل نطاق كفريق: منسّق يكلمك، ومشغّل سلة هو الوحيد اللي يلمس متجرك، ومحلل للمتجر، ومراجع يعيد حساب كل رقم. تجيك إجابة وحدة فيها الخلاصة والحقائق والأسباب المحتملة وما لا نعرفه والمقترحات وطريقة التحليل.
+
+المتاح الآن: محلل المتجر والمراجع. باقي المتخصصين (التسعير، النمو، الإعلانات وغيرهم) مخطط لهم ونقول لك بوضوح إنهم غير متاحين بعد. التفاصيل في [docs/ar/team.md](docs/ar/team.md).
+
+---
+
 ## هيكل المستودع
 
 ```
@@ -169,8 +177,12 @@ plugins/nitaaq-store/
     scripts/nitaaq_cli.py                الأدوات المساعدة (Python، مكتبة قياسية)
     scripts/nitaaq/                      القدرات، أمان الكتابة، المنتجات، التقارير، الفحص، Search Console، المعالجة…
     assets/operation-catalog.json        كتالوج العمليات الثابت
+    assets/agent-registry.json           سجل الفريق: الأدوار والقدرات والحدود
+    assets/metrics.json, assets/schemas/ قاموس المقاييس وعقود البيانات
+  agents/                                وكلاء Claude Code الاختياريون (مولّدة)
 adapters/                                إضافات رفيعة لكل بيئة (Claude Code، Codex، claude.ai)
 tools/build.py                           التحقق وبناء الحزم في dist/
+tools/gen_agents.py                      توليد تعريفات الوكلاء من السجل
 tools/install.py                         التثبيت الآمن
 tools/run_evals.py                       تقييمات التفعيل والسلوك
 tests/                                   الاختبارات + خادم MCP تجريبي
@@ -203,4 +215,6 @@ python3 plugins/nitaaq-store/skills/nitaaq-store/scripts/nitaaq_cli.py --help
 - [أوضاع التشغيل](docs/ar/modes.md)
 - [القدرات والتحقق](docs/ar/capabilities.md)
 - [القيود المعروفة](docs/ar/limitations.md)
+- [فريق التحليل](docs/ar/team.md)
+- [إشعارات الأطراف الثالثة](THIRD_PARTY_NOTICES.md)
 - [سجل التغييرات](CHANGELOG.md)

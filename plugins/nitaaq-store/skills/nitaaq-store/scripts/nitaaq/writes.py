@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import Any
 
 from .arabic import normalize, parse_amount
+from .locks import locked_json, read_json
 
 _MISSING = object()
 
@@ -158,55 +159,89 @@ def verify_readback(patch: dict, readback: dict) -> dict:
 # ---------------------------------------------------------------- idempotency
 
 
-def operation_key(op: str, entity: str | None, payload: dict) -> str:
-    body = json.dumps({"op": op, "entity": entity, "payload": payload}, sort_keys=True,
-                      ensure_ascii=False, default=str)
-    return hashlib.sha256(body.encode("utf-8")).hexdigest()[:24]
+def operation_key(op: str, entity: str | None, payload: dict, store_id: str | None = None,
+                  approval_id: str | None = None) -> str:
+    """Stable key for one intended side effect.
+
+    store_id keeps the same operation on two stores apart; approval_id ties
+    the attempt to the approval that allowed it. Both are optional so keys
+    written by 1.1.0 (without them) keep matching.
+    """
+    body = {"op": op, "entity": entity, "payload": payload}
+    if store_id is not None:
+        body["store_id"] = str(store_id)
+    if approval_id is not None:
+        body["approval_id"] = approval_id
+    raw = json.dumps(body, sort_keys=True, ensure_ascii=False, default=str)
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:24]
+
+
+def ledger_path(root: str | Path, store_id: str) -> Path:
+    """Per-store ledger location: <root>/stores/<store_id>/ledger.json."""
+    return Path(root) / "stores" / _safe(store_id) / "ledger.json"
+
+
+def _safe(part) -> str:
+    s = str(part)
+    if not s or s in (".", "..") or any(c in s for c in "/\\\0"):
+        raise ValueError(f"unsafe path component: {part!r}")
+    return s
 
 
 class Ledger:
     """Local JSON ledger of write attempts, to stop duplicate side effects.
 
-    A write whose outcome is "unknown" (timeout after sending) must be
-    reconciled by reading the store before any retry.
+    Safe across processes: every check-and-set runs under an exclusive file
+    lock and the file is replaced atomically. A write whose outcome is
+    "unknown" (timeout after sending) must be reconciled by reading the
+    store before any retry.
     """
 
     def __init__(self, path: str | Path):
         self.path = Path(path)
-        self.data = json.loads(self.path.read_text(encoding="utf-8")) if self.path.exists() else {}
+        self.data = read_json(self.path)
 
-    def _save(self):
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.path.write_text(json.dumps(self.data, ensure_ascii=False, indent=1), encoding="utf-8")
+    def _refresh(self) -> dict:
+        self.data = read_json(self.path)
+        return self.data
 
     def check(self, key: str) -> str:
         """"new" | "done" | "reconcile_first" | "retry_allowed"."""
-        rec = self.data.get(key)
-        if not rec:
-            return "new"
-        return {"succeeded": "done", "unknown": "reconcile_first", "pending": "reconcile_first",
-                "failed": "retry_allowed"}.get(rec["status"], "reconcile_first")
+        return _state_of(self._refresh().get(key))
 
-    def begin(self, key: str, op: str, entity: str | None, summary: str = "") -> str:
-        state = self.check(key)
-        if state in ("done", "reconcile_first"):
-            return state
-        self.data[key] = {"op": op, "entity": entity, "summary": summary, "status": "pending",
-                          "at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
-        self._save()
+    def begin(self, key: str, op: str, entity: str | None, summary: str = "",
+              store_id: str | None = None, approval_id: str | None = None) -> str:
+        """Atomically claim the key. Only one caller ever gets "go" for a pending key."""
+        with locked_json(self.path) as data:
+            state = _state_of(data.get(key))
+            if state in ("done", "reconcile_first"):
+                self.data = data
+                return state
+            data[key] = {"op": op, "entity": entity, "summary": summary, "status": "pending",
+                         "store_id": store_id, "approval_id": approval_id,
+                         "at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
+            self.data = data
         return "go"
 
     def finish(self, key: str, status: str, result_id: str | None = None, note: str = ""):
         if status not in ("succeeded", "failed", "unknown"):
             raise ValueError(status)
-        rec = self.data.setdefault(key, {})
-        rec.update({"status": status, "result_id": result_id, "note": note,
-                    "finished_at": datetime.now(timezone.utc).isoformat(timespec="seconds")})
-        self._save()
+        with locked_json(self.path) as data:
+            rec = data.setdefault(key, {})
+            rec.update({"status": status, "result_id": result_id, "note": note,
+                        "finished_at": datetime.now(timezone.utc).isoformat(timespec="seconds")})
+            self.data = data
 
     def reconcile(self, key: str, found_id: str | None):
         """After reading the store: found_id means the write did happen."""
         self.finish(key, "succeeded" if found_id else "failed", found_id, "reconciled by readback")
+
+
+def _state_of(rec) -> str:
+    if not rec:
+        return "new"
+    return {"succeeded": "done", "unknown": "reconcile_first", "pending": "reconcile_first",
+            "failed": "retry_allowed"}.get(rec.get("status"), "reconcile_first")
 
 
 def find_existing_by_name(items: list[dict], name: str, name_field: str = "name") -> list[dict]:

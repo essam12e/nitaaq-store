@@ -12,6 +12,11 @@ Faults (comma-separated in MOCK_FAULTS):
   sale_after_write    one unit sells right after update_product_quantity
   status_forbidden    update_order_status returns 403
   expired             every call returns 401 token expired
+  orders_truncated    list_orders reports the full total but returns no rows after page 1
+
+Optional order history (default behavior is unchanged without it):
+  MOCK_ORDERS_FILE    JSON list of orders served by list_orders instead of the built-in one
+  MOCK_PAGE_SIZE      page size for list_orders (default: everything on one page)
 """
 
 import json
@@ -21,6 +26,8 @@ import sys
 FAULTS = set(filter(None, os.environ.get("MOCK_FAULTS", "").split(",")))
 PROFILE = os.environ.get("MOCK_PROFILE", "merchant")  # "merchant" or "partners"
 STATE_FILE = os.environ.get("MOCK_STATE_FILE")  # dump state after every call (for evals)
+ORDERS_FILE = os.environ.get("MOCK_ORDERS_FILE")
+PAGE_SIZE = int(os.environ.get("MOCK_PAGE_SIZE", "0"))
 
 STATE = {
     "store": {"id": 777, "name": "متجر الريحان (تجريبي)"},
@@ -128,7 +135,18 @@ def call(name, a):
             prod["quantity"] -= 1
         return {"product_id": prod["id"], "quantity": a["quantity"]}
     if name == "list_orders":
-        return {"data": list(STATE["orders"].values()), "pagination": {"total": len(STATE["orders"])}}
+        rows = list(STATE["orders"].values())
+        if ORDERS_FILE:
+            with open(ORDERS_FILE, encoding="utf-8") as fh:
+                rows = json.load(fh)
+        if not PAGE_SIZE:
+            return {"data": rows, "pagination": {"total": len(rows)}}
+        page = int(a.get("page") or 1)
+        chunk = rows[(page - 1) * PAGE_SIZE: page * PAGE_SIZE]
+        if "orders_truncated" in FAULTS and page > 1:
+            chunk = []
+        pages = (len(rows) + PAGE_SIZE - 1) // PAGE_SIZE
+        return {"data": chunk, "pagination": {"total": len(rows), "page": page, "total_pages": pages}}
     if name == "get_order":
         return STATE["orders"][a["id"]]
     if name == "list_order_statuses":

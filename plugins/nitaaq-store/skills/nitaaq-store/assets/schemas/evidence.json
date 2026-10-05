@@ -1,0 +1,115 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "nitaaq/evidence.json",
+ "title": "evidence",
+ "type": "object",
+ "required": [
+  "evidence_id",
+  "store_id",
+  "source",
+  "fetched_at",
+  "coverage",
+  "content_hash"
+ ],
+ "properties": {
+  "evidence_id": {
+   "type": "string"
+  },
+  "store_id": {
+   "type": "string"
+  },
+  "account_id": {
+   "type": [
+    "string",
+    "null"
+   ]
+  },
+  "source": {
+   "type": "object",
+   "required": [
+    "kind"
+   ],
+   "properties": {
+    "kind": {
+     "type": "string",
+     "enum": [
+      "mcp",
+      "export",
+      "public",
+      "report_tool",
+      "merchant"
+     ]
+    },
+    "operation": {
+     "type": "string"
+    },
+    "tool": {
+     "type": "string"
+    }
+   },
+   "additionalProperties": true
+  },
+  "kind": {
+   "type": [
+    "string",
+    "null"
+   ]
+  },
+  "period": {
+   "type": [
+    "array",
+    "null"
+   ]
+  },
+  "timezone": {
+   "type": "string"
+  },
+  "fetched_at": {
+   "type": "string"
+  },
+  "coverage": {
+   "type": "object",
+   "required": [
+    "records_fetched",
+    "complete"
+   ],
+   "properties": {
+    "records_fetched": {
+     "type": "integer"
+    },
+    "records_unique": {
+     "type": "integer"
+    },
+    "records_total": {
+     "type": [
+      "integer",
+      "null"
+     ]
+    },
+    "pages": {
+     "type": [
+      "integer",
+      "null"
+     ]
+    },
+    "complete": {
+     "type": [
+      "boolean",
+      "null"
+     ]
+    },
+    "duplicates_removed": {
+     "type": "integer"
+    }
+   },
+   "additionalProperties": true
+  },
+  "content_hash": {
+   "type": "string"
+  },
+  "cache_key": {
+   "type": "string"
+  }
+ },
+ "additionalProperties": true
+}

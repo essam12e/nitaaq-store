@@ -1,0 +1,39 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "nitaaq/recommendation.json",
+ "title": "recommendation",
+ "type": "object",
+ "required": [
+  "recommendation_id",
+  "findings",
+  "summary_ar"
+ ],
+ "properties": {
+  "recommendation_id": {
+   "type": "string"
+  },
+  "findings": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   },
+   "minItems": 1
+  },
+  "summary_ar": {
+   "type": "string"
+  },
+  "options": {
+   "type": "array",
+   "items": {
+    "type": "object"
+   }
+  },
+  "tradeoffs_ar": {
+   "type": "string"
+  },
+  "not_doing_ar": {
+   "type": "string"
+  }
+ },
+ "additionalProperties": true
+}
