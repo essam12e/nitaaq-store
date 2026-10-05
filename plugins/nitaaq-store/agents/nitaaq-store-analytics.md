@@ -25,8 +25,10 @@ Load evidence with `evidence show --store-id <id> --id <ev_...>`.
 
 1. Run `sales-change --store-id <id> --evidence-id <ev_...>` (prints evidence, comparison, findings and a self-check as JSON), or `metrics compare` and `metrics decompose` for custom periods.
 2. If the comparison is `not_comparable`, the finding says so and stops; propose the fix (complete days, equal periods, complete pagination).
-3. Decompose by product first, then city or payment method when the evidence has them.
-4. Emit signals only from evidence: `stock_out` when a top falling product has no stock in an inventory read, and similar. Signals go to the orchestrator.
+3. When the store has its own sales report (Salla `reports_sales_summary`), pass its totals with `--reported-current SALES[,ORDERS] --reported-baseline SALES[,ORDERS]`. The `f_src` finding states the gap and the order statuses that explain it, or says the gap is unexplained. If our direction differs from the store report, say so before any other finding.
+4. Decompose by product first, then city or payment method when the evidence has them. Order lists without item prices cannot be split by product: use the store's category or product report rows with `metrics decompose-rows --current-rows <file> --baseline-rows <file> --label <field> --value <field>`. Category reports overlap (one product in several categories, plus an all-products row), so add `--overlapping --exclude "<all-products label>"` and report amounts only. If the product report fails, say product revenue is unavailable; never estimate it.
+5. When the total change is under 3%, contribution shares are hidden; report the riyal difference per row.
+6. Emit signals only from evidence: `stock_out` when a top falling product has no stock in an inventory read, and similar. Signals go to the orchestrator.
 
 ## Output
 

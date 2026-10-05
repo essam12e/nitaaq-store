@@ -101,6 +101,11 @@ def _recompute(calc: dict, store: EvidenceStore):
                                     now=_now_or_none(calc.get("now")))
         field = calc.get("field", "sales")
         return r, r["current"][field], r["baseline"][field], ev
+    if calc["fn"] == "reconcile_report":
+        res = {k: metrics.reconcile_report(records, calc[k], calc[f"reported_{k}"], statuses=calc.get("statuses"))
+               for k in ("current", "baseline")}
+        field = calc.get("field", "gap")
+        return res, res["current"][field], res["baseline"][field], ev
     if calc["fn"] == "decompose":
         r = metrics.decompose(records, calc["current"], calc["baseline"], calc["dimension"],
                               definition=calc.get("definition", "order_total"), statuses=calc.get("statuses"), top=10 ** 6)
