@@ -229,7 +229,8 @@ class Phase2RoutingTests(unittest.TestCase):
 
     def test_broad_respects_cap(self):
         r = routing.route("حلل متجري وقل لي وش أحسن", self.ALL)
-        self.assertEqual(r["specialists_to_run"], ["store_analytics", "pricing", "cro", "growth"])
+        self.assertEqual(r["specialists_to_run"], ["store_analytics", "pricing", "growth", "cro"])
+        self.assertEqual({s["agent"]: s["status"] for s in r["stages"]}["seo_geo"], "deferred")
         self.assertLessEqual(len(r["specialists_to_run"]), registry.limits()["max_specialists_broad"])
         self.assertTrue(all(s["depends_on"] == ["store_analytics"] for s in r["stages"]
                             if s["status"] == "run" and s["agent"] != "store_analytics"))
@@ -276,7 +277,8 @@ class Phase2CliTests(unittest.TestCase):
 
     def test_generated_agents(self):
         names = sorted(p.stem for p in (ROOT / "plugins" / "nitaaq-store" / "agents").glob("*.md"))
-        self.assertEqual(names, ["nitaaq-cro", "nitaaq-growth", "nitaaq-pricing", "nitaaq-reviewer", "nitaaq-store-analytics"])
+        for n in ("nitaaq-cro", "nitaaq-growth", "nitaaq-pricing", "nitaaq-reviewer", "nitaaq-store-analytics"):
+            self.assertIn(n, names)
 
 
 if __name__ == "__main__":

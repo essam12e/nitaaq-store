@@ -495,7 +495,7 @@
   {
    "id": "seo_geo",
    "kind": "specialist",
-   "status": "planned",
+   "status": "active",
    "phase": 3,
    "label_ar": "ظهور المتجر SEO/GEO",
    "routing": {
@@ -515,20 +515,77 @@
      "export:gsc"
     ]
    },
-   "note": "The existing SEO/GEO service (references/seo-geo.md) keeps running as today; phase 3 wraps it as a routed stage.",
    "upstream": [
     {
-     "path": "marketing/marketing-seo-specialist.md"
+     "path": "marketing/marketing-seo-specialist.md",
+     "use": "white-hat only; check internal competition before changing titles"
     },
     {
-     "path": "marketing/marketing-ai-citation-strategist.md"
+     "path": "marketing/marketing-ai-citation-strategist.md",
+     "use": "never guarantee citation outcomes; benchmark before you fix"
     }
-   ]
+   ],
+   "direct_writes": "prohibited",
+   "input_schema": "schemas/task-envelope.json",
+   "output_schema": "schemas/finding.json",
+   "review": {
+    "required_when": [
+     "priority:high",
+     "claims_cause",
+     "action_proposal_sensitive"
+    ],
+    "reviewer": "reviewer"
+   },
+   "fallback": "sequential",
+   "version": "1.0.0",
+   "mission": "Run the existing SEO/GEO audit unchanged as a routed stage, and check internal competition between the store's own pages before any title change.",
+   "reference": "references/agents/seo-geo.md",
+   "allowed_reads": [
+    "public:pages",
+    "products.list",
+    "products.get",
+    "export:gsc"
+   ],
+   "evidence_rules": [
+    "public_crawl_is_not_index_status",
+    "gsc_only_from_merchant_file_or_tool"
+   ],
+   "uncertainty_rules": [
+    "never_guarantee_rankings_or_citations",
+    "cannibalization_is_a_candidate"
+   ],
+   "budget": {
+    "max_tool_calls": 30,
+    "max_pages": 25,
+    "max_minutes": 10
+   },
+   "native": {
+    "name": "nitaaq-seo-geo",
+    "description": "Nitaaq Store internal SEO/GEO specialist. Audits saved public page evidence with the existing Nitaaq SEO/GEO checks and finds internal competition between store pages from titles or Search Console files. Read-only; never calls store tools. Use only when the nitaaq-store skill delegates an seo_geo stage.",
+    "claude_code": {
+     "tools": [
+      "Read",
+      "Grep",
+      "Glob",
+      "Bash"
+     ],
+     "disallowedTools": [
+      "Write",
+      "Edit",
+      "NotebookEdit",
+      "Agent",
+      "mcp__*"
+     ]
+    },
+    "codex": {
+     "sandbox_mode": "read-only"
+    }
+   }
   },
   {
    "id": "customer_intelligence",
    "kind": "specialist",
-   "status": "planned",
+   "status": "active",
    "phase": 3,
    "label_ar": "صوت العميل",
    "routing": {
@@ -550,17 +607,75 @@
      ]
     ],
     "optional": [
-     "orders.get"
+     "orders.get",
+     "orders.list"
     ]
    },
    "upstream": [
     {
-     "path": "product/product-feedback-synthesizer.md"
+     "path": "product/product-feedback-synthesizer.md",
+     "use": "thematic coding, cleaning and dedupe, volume and trend; rejected: NPS targets, software roadmaps"
     },
     {
-     "path": "research/research-synthesist.md"
+     "path": "research/research-synthesist.md",
+     "use": "volume of sources is not strength of evidence"
     }
-   ]
+   ],
+   "direct_writes": "prohibited",
+   "input_schema": "schemas/task-envelope.json",
+   "output_schema": "schemas/finding.json",
+   "review": {
+    "required_when": [
+     "priority:high",
+     "claims_cause",
+     "action_proposal_sensitive"
+    ],
+    "reviewer": "reviewer"
+   },
+   "fallback": "sequential",
+   "version": "1.0.0",
+   "mission": "Group reviews and complaints into themes with stated sample size and coverage, compare periods, and rank themes by frequency x severity.",
+   "reference": "references/agents/customer-intelligence.md",
+   "allowed_reads": [
+    "reviews.list",
+    "orders.get"
+   ],
+   "evidence_rules": [
+    "sample_size_stated",
+    "quotes_redacted",
+    "dedup_by_review_id"
+   ],
+   "uncertainty_rules": [
+    "volume_is_not_strength_of_evidence",
+    "small_sample_flagged"
+   ],
+   "budget": {
+    "max_tool_calls": 20,
+    "max_evidence_records_in_context": 500,
+    "max_minutes": 10
+   },
+   "native": {
+    "name": "nitaaq-customer-intelligence",
+    "description": "Nitaaq Store internal customer intelligence specialist. Groups saved review and complaint evidence into themes with sample size, compares periods and ranks themes. Read-only; never calls store tools. Use only when the nitaaq-store skill delegates a customer_intelligence stage.",
+    "claude_code": {
+     "tools": [
+      "Read",
+      "Grep",
+      "Glob",
+      "Bash"
+     ],
+     "disallowedTools": [
+      "Write",
+      "Edit",
+      "NotebookEdit",
+      "Agent",
+      "mcp__*"
+     ]
+    },
+    "codex": {
+     "sandbox_mode": "read-only"
+    }
+   }
   },
   {
    "id": "tracking",
