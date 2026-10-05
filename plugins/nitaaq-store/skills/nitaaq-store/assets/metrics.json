@@ -1,0 +1,31 @@
+{
+  "version": "1",
+  "_note": "Shared metric dictionary. Every specialist uses these ids and definitions; code in scripts/nitaaq/metrics.py and reports.py implements them. Missing inputs make a metric unavailable, never zero.",
+  "defaults": {"timezone": "Asia/Riyadh", "currency": "SAR", "vat_rate_sa": "0.15",
+               "excluded_statuses_hint": ["ملغي", "ملغى", "canceled", "cancelled", "مسترجع", "refunded"],
+               "comparison_days": 28},
+  "metrics": [
+    {"id": "gmv", "label_ar": "إجمالي قيمة الطلبات (GMV)", "definition_ar": "مجموع إجمالي الطلبات كما يعيده المصدر (يشمل عادة الضريبة والشحن بعد الخصم) للحالات المشمولة.", "requires": ["orders.total"], "code": "metrics.compare_periods(definition='order_total')"},
+    {"id": "net_sales", "label_ar": "صافي مبيعات المنتجات", "definition_ar": "قيمة المنتجات بعد الخصم، بدون الشحن والضريبة. المرتجعات تُطرح فقط إذا توفرت مبالغها؛ وإلا تُذكر «غير معروفة».", "requires": ["orders.subtotal|orders.items.total"], "code": "metrics.compare_periods(definition='items_net')"},
+    {"id": "orders", "label_ar": "عدد الطلبات", "definition_ar": "عدد الطلبات الفريدة (بعد إزالة التكرار برقم الطلب) ضمن الفترة والحالات المشمولة.", "requires": ["orders.id", "orders.date"]},
+    {"id": "aov", "label_ar": "متوسط قيمة الطلب", "definition_ar": "مقياس المبيعات المختار ÷ عدد الطلبات ذات القيمة المعروفة.", "requires": ["orders.total|orders.subtotal"]},
+    {"id": "refunds", "label_ar": "المرتجعات", "definition_ar": "مبالغ مستردة فعلاً من المصدر. بدونها: «غير معروفة»، لا صفر.", "requires": ["refunds.amount"]},
+    {"id": "new_customers", "label_ar": "عملاء جدد", "definition_ar": "عملاء أول طلب لهم (في كل تاريخ المتجر) يقع داخل الفترة. بدون تاريخ أول طلب: «جديد داخل الفترة فقط».", "requires": ["customers.first_order_date"]},
+    {"id": "repeat_rate", "label_ar": "نسبة تكرار الشراء", "definition_ar": "نسبة العملاء الذين لهم أكثر من طلب خلال الفترة المحددة.", "requires": ["orders.customer_id"]},
+    {"id": "cohort_retention", "label_ar": "الاحتفاظ حسب الفوج", "definition_ar": "الفوج = شهر أول طلب؛ الاحتفاظ = نسبة من اشترى مرة ثانية خلال N يوم. يحتاج تاريخاً كاملاً.", "requires": ["orders.customer_id", "customers.first_order_date"]},
+    {"id": "historical_customer_value", "label_ar": "قيمة العميل التاريخية", "definition_ar": "مجموع ما دفعه العميل فعلاً حتى الآن. واقع ملاحظ.", "requires": ["orders.customer_id", "orders.total"]},
+    {"id": "modeled_ltv", "label_ar": "القيمة المتوقعة للعميل (LTV)", "definition_ar": "تقدير مستقبلي بافتراضات معلنة (مدة، تكرار، هامش). فرضية لا حقيقة.", "requires": ["historical_customer_value", "assumptions"]},
+    {"id": "cac", "label_ar": "تكلفة اكتساب العميل", "definition_ar": "تكلفة الإعلان في الفترة ÷ العملاء الجدد في نفس الفترة.", "requires": ["ads.spend", "new_customers"]},
+    {"id": "roas", "label_ar": "العائد على الإنفاق الإعلاني", "definition_ar": "مبيعات منسوبة حسب المنصة ÷ تكلفة الإعلان. ليست ربحية.", "requires": ["ads.attributed_sales", "ads.spend"], "code": "reports.roas"},
+    {"id": "contribution_margin", "label_ar": "هامش المساهمة", "definition_ar": "صافي المبيعات − تكلفة المنتجات − الشحن المدفوع من المتجر − رسوم الدفع − الإعلان. يحتاج كل المدخلات.", "requires": ["net_sales", "items.cost", "shipping_cost", "payment_fees", "ads.spend"]},
+    {"id": "product_margin", "label_ar": "هامش المنتجات", "definition_ar": "إيراد المنتجات − تكلفتها. ليس صافي الربح.", "requires": ["items.total", "items.cost"], "code": "reports.product_margins"},
+    {"id": "conversion_rate", "label_ar": "معدل التحويل", "definition_ar": "الطلبات ÷ الجلسات (أو المستخدمين). يُذكر المقام دائماً.", "requires": ["traffic.sessions|traffic.users"]}
+  ],
+  "rules_ar": [
+    "اليوم الجاري الجزئي لا يُقارن بيوم كامل إلا بتنبيه صريح.",
+    "غير المتوفر ليس صفراً.",
+    "غياب بيانات الزيارات أو الإعلانات ليس دليلاً على أنها السبب.",
+    "اتفاق تخصصين على نفس الدليل ليس تأكيداً مستقلاً.",
+    "الحسابات من كود حتمي، لا حساب ذهني."
+  ]
+}

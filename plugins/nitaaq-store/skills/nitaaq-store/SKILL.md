@@ -145,3 +145,20 @@ Keep it short, in Arabic:
 
 Arabic message templates for confirmations, progress and errors:
 [references/messages-ar.md](references/messages-ar.md).
+
+## 7. Analysis team (orchestrator, operator, specialists, reviewer)
+
+Questions that need analysis («ليش المبيعات نازلة؟», «وش أحسّن في متجري؟»)
+go through a small team. You are the orchestrator; the merchant only ever
+talks to you. Full flow: [references/orchestrator.md](references/orchestrator.md).
+
+1. `route "<message>" --map .nitaaq/capabilities.json` tells you the intent, whether it is a simple read, and which specialists can run (`run`), lack data (`blocked`), are not built yet (`not_available_yet`), or map to an existing service (`existing_service`).
+2. Only the [Salla operator](references/salla-operator.md) calls store tools. It saves every read as evidence (`evidence make`) with coverage, and performs writes only with a bound approval (`approvals grant/check`).
+3. Specialists read evidence, never store tools: [store analytics](references/agents/store-analytics.md). For sales changes: `sales-change --store-id <id> --orders orders.json --total <reported> --md`.
+4. Every material finding is reviewed ([reviewer](references/agents/reviewer.md)): numbers recomputed, unsupported causes and invented benchmarks rejected.
+5. One Arabic answer: الخلاصة، الحقائق، الأسباب المحتملة، ما لا نعرفه، المقترحات، طريقة التحليل. Say whether the review was independent or a self-check.
+
+Metric definitions and comparison rules: [references/metrics.md](references/metrics.md).
+Never present a planned specialist as working, and never present a change
+from an invalid comparison (partial day, unequal periods, incomplete data)
+as real.

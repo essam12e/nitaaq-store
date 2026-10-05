@@ -1,0 +1,183 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "nitaaq/finding.json",
+ "title": "finding",
+ "type": "object",
+ "required": [
+  "finding_id",
+  "agent",
+  "store_id",
+  "metric",
+  "period",
+  "evidence_refs",
+  "coverage_note_ar",
+  "observed",
+  "interpretation_ar",
+  "alternatives_ar",
+  "confidence",
+  "priority",
+  "limitations_ar"
+ ],
+ "properties": {
+  "finding_id": {
+   "type": "string"
+  },
+  "agent": {
+   "type": "string"
+  },
+  "store_id": {
+   "type": "string"
+  },
+  "account_id": {
+   "type": [
+    "string",
+    "null"
+   ]
+  },
+  "metric": {
+   "type": "string"
+  },
+  "entity": {
+   "type": [
+    "object",
+    "null"
+   ]
+  },
+  "period": {
+   "type": "object"
+  },
+  "evidence_refs": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   },
+   "minItems": 1
+  },
+  "coverage_note_ar": {
+   "type": "string",
+   "minLength": 1
+  },
+  "freshness": {
+   "type": "string"
+  },
+  "observed": {
+   "type": "array",
+   "minItems": 1,
+   "items": {
+    "type": "object",
+    "required": [
+     "label_ar"
+    ],
+    "properties": {
+     "label_ar": {
+      "type": "string"
+     },
+     "current": {},
+     "baseline": {},
+     "change_pct": {},
+     "calc": {
+      "type": [
+       "object",
+       "string",
+       "null"
+      ]
+     }
+    },
+    "additionalProperties": true
+   }
+  },
+  "interpretation_ar": {
+   "type": "string"
+  },
+  "alternatives_ar": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "confidence": {
+   "type": "object",
+   "required": [
+    "level",
+    "rationale_ar"
+   ],
+   "properties": {
+    "level": {
+     "type": "string",
+     "enum": [
+      "high",
+      "medium",
+      "low"
+     ]
+    },
+    "rationale_ar": {
+     "type": "string",
+     "minLength": 1
+    }
+   },
+   "additionalProperties": true
+  },
+  "priority": {
+   "type": "string",
+   "enum": [
+    "high",
+    "medium",
+    "low"
+   ]
+  },
+  "proposed_action_ref": {
+   "type": [
+    "string",
+    "null"
+   ]
+  },
+  "expected_effect": {
+   "type": "object",
+   "required": [
+    "kind"
+   ],
+   "properties": {
+    "kind": {
+     "type": "string",
+     "enum": [
+      "hypothesis",
+      "range",
+      "unknown"
+     ]
+    },
+    "range_ar": {
+     "type": "string"
+    }
+   },
+   "additionalProperties": true
+  },
+  "requires": {
+   "type": [
+    "object",
+    "null"
+   ]
+  },
+  "limitations_ar": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "signals": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "claims_cause": {
+   "type": "boolean"
+  },
+  "mechanism_evidence_refs": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  }
+ },
+ "additionalProperties": true
+}

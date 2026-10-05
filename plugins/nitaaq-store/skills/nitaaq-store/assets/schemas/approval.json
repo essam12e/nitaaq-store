@@ -1,0 +1,74 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "nitaaq/approval.json",
+ "title": "approval",
+ "type": "object",
+ "required": [
+  "approval_id",
+  "store_id",
+  "operation",
+  "entities",
+  "items",
+  "payload_hash",
+  "granted_at",
+  "expires_at",
+  "status"
+ ],
+ "properties": {
+  "approval_id": {
+   "type": "string"
+  },
+  "store_id": {
+   "type": "string"
+  },
+  "account_id": {
+   "type": [
+    "string",
+    "null"
+   ]
+  },
+  "operation": {
+   "type": "string"
+  },
+  "entities": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "items": {
+   "type": "array",
+   "items": {
+    "type": "object"
+   }
+  },
+  "payload_hash": {
+   "type": "string"
+  },
+  "snapshot_hashes": {
+   "type": "object"
+  },
+  "proposal_id": {
+   "type": [
+    "string",
+    "null"
+   ]
+  },
+  "granted_at": {
+   "type": "string"
+  },
+  "expires_at": {
+   "type": "string"
+  },
+  "status": {
+   "type": "string",
+   "enum": [
+    "granted",
+    "used",
+    "revoked",
+    "expired"
+   ]
+  }
+ },
+ "additionalProperties": true
+}
