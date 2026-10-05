@@ -196,6 +196,52 @@ class Arming(GateBase):
         self.assertEqual(denied_reads, [])
 
 
+LIVE = "mcp__fdee1949-4678-40e5-b5ce-49678fa06bb6__"  # claude.ai names connector servers by id
+
+
+class KnownSallaConnector(GateBase):
+    """Tool names seen on a live Salla merchant connector (2026-10-05)."""
+
+    def setUp(self):
+        super().setUp()
+        (self.root / "capabilities.json").unlink()
+        (self.root / "tools.json").unlink()
+
+    def test_gated_without_map_whatever_the_server_id(self):
+        for n in sorted(gate.SALLA_WRITE_TOOLS):
+            self.assertEqual(self.decide(LIVE + n, {"product": 101})["decision"], "deny", n)
+        for n in sorted(gate.SALLA_READ_TOOLS) + ["reports_sales_summary", "reports_dashboard", "reports_stock"]:
+            self.assertEqual(self.decide(LIVE + n, {"period": "last_30_days"})["decision"], "pass", n)
+        for n in sorted(gate.SALLA_STAGE_TOOLS):
+            r = self.decide(LIVE + n, {"product": 101, "price": 219})
+            self.assertEqual((r["decision"], r["class"]["kind"]), ("pass", "stage"), n)
+
+    def test_table_wins_over_map_heuristics(self):
+        names = sorted(gate.SALLA_WRITE_TOOLS | gate.SALLA_READ_TOOLS | gate.SALLA_STAGE_TOOLS) + ["reports_sales_summary"]
+        cmap = capabilities.build_map([{"name": LIVE + n, "description": ""} for n in names])
+        self.assertEqual(gate.classify(LIVE + "reports_sales_summary", {}, cmap)["kind"], "read")
+        self.assertEqual(gate.classify(LIVE + "products_update_propose", {}, cmap)["kind"], "stage")
+        self.assertEqual(gate.classify(LIVE + "landing_page_manage", {"action": "publish"}, cmap)["kind"], "write")
+
+    def test_two_step_apply_is_armed_against_the_propose_input(self):
+        rec, items = self.approve()
+        propose = {"product": 101, "price": 219}
+        apply = {"product_id": 101, "confirm_token": "tok_abc"}
+        args = (self.root, STORE, rec["approval_id"], "products.update", items, {"101": {"price": 249}},
+                LIVE + "products_update_apply", apply)
+        self.assertIn("value_not_in_input", gate.arm(*args)["reasons"])
+        bad = gate.arm(*args[:-1], {"product_id": 102, "confirm_token": "tok_abc"}, covers=propose)
+        self.assertIn("entity_not_in_input", bad["reasons"])
+        self.assertTrue(gate.arm(*args, covers=propose)["ok"])
+        self.assertEqual(self.decide(LIVE + "products_update_apply", {"product_id": 101, "confirm_token": "other"})["decision"], "deny")
+        self.assertEqual(self.decide(LIVE + "products_update_apply", apply)["decision"], "pass")
+        self.assertEqual(self.decide(LIVE + "products_update_apply", apply)["decision"], "deny")
+
+    def test_subagents_cannot_even_read_or_stage(self):
+        for n in ("orders_list", "products_update_propose"):
+            self.assertEqual(self.decide(LIVE + n, agent_id="a1")["decision"], "deny", n)
+
+
 class HookScript(GateBase):
     def run_hook(self, event, env_extra=None):
         env = {k: v for k, v in os.environ.items() if not k.startswith("NITAAQ_")}

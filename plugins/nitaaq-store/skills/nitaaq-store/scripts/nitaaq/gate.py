@@ -17,7 +17,14 @@ How a write gets through:
    and the input exactly, and consumes it. Anything else is denied with an
    Arabic reason.
 
-Classification uses the capability map (.nitaaq/capabilities.json):
+Known Salla merchant connector tools (names observed on a live merchant
+connector on 2026-10-05) are classified from a fixed table first, whatever
+the server is called (claude.ai names connector servers by id). Salla's own
+two-step writes stage a change with `*_propose` (nothing reaches the store)
+and commit it with `*_apply`; only the apply step is gated, and it is armed
+with `--covers` pointing at the propose input that carries the values.
+
+Other tools are classified with the capability map (.nitaaq/capabilities.json):
   outside  not a Salla merchant tool (other servers, Salla Partners) -> not gated
   read     mapped to read operations, or read-only by annotation/name -> passes
   write    mapped to a write or destructive operation -> needs an armed token
@@ -61,6 +68,36 @@ REASONS_AR = {
 }
 
 
+# Salla merchant connector tools, by what they do to the store.
+SALLA_WRITE_TOOLS = frozenset("""
+homepage_component_delete homepage_component_edit inventory_update landing_page_component_delete
+landing_page_component_edit landing_page_manage landing_page_remove menu_items_edit menu_manage menu_remove
+orders_history_add orders_status_update product_image_add products_create products_options_apply
+products_update_apply products_variants_update_apply store_branding_update theme_rating_submit
+theme_settings_update theme_version_manage theme_version_remove
+""".split())
+SALLA_STAGE_TOOLS = frozenset("products_options_propose products_update_propose products_variants_update_propose".split())
+SALLA_READ_TOOLS = frozenset("""
+abandoned_carts_get abandoned_carts_list categories_list customers_get customers_list homepage_component_get
+homepage_components_list inventory_list landing_page_component_get landing_page_components_list
+landing_page_settings_get landing_pages_list languages_list menu_list order_history_get orders_get
+orders_invoices_get orders_invoices_list orders_list orders_statuses_list product_image_get products_get
+products_list products_list_with_images products_sku_get products_trashed_list products_variants_list
+reviews_list shipments_list store_branding_get store_context_get store_dashboard_card theme_get
+theme_settings_list theme_versions_list themes_list
+""".split())
+
+
+def _known_kind(short: str) -> str | None:
+    if short in SALLA_WRITE_TOOLS:
+        return "write"
+    if short in SALLA_STAGE_TOOLS:
+        return "stage"
+    if short in SALLA_READ_TOOLS or short.startswith("reports_"):
+        return "read"
+    return None
+
+
 def _now(now: datetime | None) -> datetime:
     return now or datetime.now(timezone.utc)
 
@@ -102,6 +139,9 @@ def classify(tool_name: str, tool_input: dict | None, cmap: dict | None, tools: 
         return {"scope": "outside", "kind": "outside", "ops": []}
     if _short(tool_name).lower() in PARTNERS_TOOL_NAMES:
         return {"scope": "outside", "kind": "outside", "ops": [], "note": "salla_partners"}
+    known = _known_kind(_short(tool_name))
+    if known:
+        return {"scope": "salla", "kind": known, "ops": [], "note": "known_salla_tool"}
     action = _action_value(tool_input)
     reads, writes = [], []
     for op_id, op in ((cmap or {}).get("operations") or {}).items():
@@ -163,13 +203,21 @@ def _expire(data: dict, t: datetime) -> None:
 
 def arm(root: str | Path, store_id: str, approval_id: str, operation: str, items: list[dict], fresh: dict | None,
         tool_name: str, tool_input: dict, *, account_id: str | None = None, ttl_minutes: float = ARM_TTL_MINUTES,
-        now: datetime | None = None) -> dict:
-    """Bind one exact tool call to a valid approval. Returns {ok, reasons, reasons_ar, token?}."""
+        covers: dict | None = None, now: datetime | None = None) -> dict:
+    """Bind one exact tool call to a valid approval. Returns {ok, reasons, reasons_ar, token?}.
+
+    covers: for a commit step whose input carries only ids and a token
+    (products_update_apply), the staged input that carries the values
+    (the products_update_propose input). Values are checked there; each
+    entity id must still appear in the call itself.
+    """
     t = _now(now)
     chk = ApprovalStore.for_store(root, store_id).check(approval_id, store_id, operation, items, fresh,
                                                         account_id=account_id, now=t)
     reasons = [] if chk["ok"] else ["approval_failed"]
-    problems = input_covers(tool_input, items)
+    problems = input_covers(covers if covers is not None else tool_input, items)
+    if covers is not None:
+        problems += [p for p in input_covers(tool_input, [{"entity_id": i["entity_id"]} for i in items])]
     reasons += list(dict.fromkeys(p["reason"] for p in problems))
     entities = sorted(str(i["entity_id"]) for i in items)
     if reasons:
@@ -260,8 +308,8 @@ def decide(event: dict, roots: list[Path], env: dict | None = None, now: datetim
         return {"decision": "pass", "reason": "outside", "class": cls}
     if event.get("agent_id"):
         return {"decision": "deny", "reason": _deny_text("subagent", tool_name, cls), "class": cls}
-    if cls["kind"] == "read":
-        return {"decision": "pass", "reason": "read", "class": cls}
+    if cls["kind"] in ("read", "stage"):
+        return {"decision": "pass", "reason": cls["kind"], "class": cls}
     for r in roots:
         rec = consume(r, tool_name, tool_input, now=now)
         if rec:
@@ -275,9 +323,13 @@ def _deny_text(code: str, tool_name: str, cls: dict) -> str:
     head = f"بوابة نطاق منعت {tool_name}: {REASONS_AR[code]}"
     if code == "subagent":
         return head
+    if tool_name.endswith("_apply"):
+        how_extra = " For a *_apply step add --covers propose.json (the propose call's input)."
+    else:
+        how_extra = ""
     how = ("Record the merchant's approval (approvals grant), then arm this exact call right before it: "
            "python3 scripts/nitaaq_cli.py gate arm --store-id <id> --id <ap_...> --op <operation> "
-           "--items items.json --fresh fresh.json --tool " + tool_name + " --input call.json")
+           "--items items.json --fresh fresh.json --tool " + tool_name + " --input call.json." + how_extra)
     if code == "unknown_tool":
         how = ("Rebuild the capability map (capabilities build) and confirm what this tool does. "
                "If it writes, it needs an approval and an armed call like any write. " + how)

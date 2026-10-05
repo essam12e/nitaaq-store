@@ -353,7 +353,8 @@ def cmd_approvals(a):
 def cmd_gate(a):
     if a.sub == "arm":
         _out(gate.arm(a.root, a.store_id, a.id, a.op, _load(a.items), _load(a.fresh) if a.fresh else None,
-                      a.tool, _load(a.input), account_id=a.account_id, ttl_minutes=a.ttl_minutes))
+                      a.tool, _load(a.input), account_id=a.account_id, ttl_minutes=a.ttl_minutes,
+                      covers=_load(a.covers) if a.covers else None))
     elif a.sub == "disarm":
         _out({"disarmed": gate.disarm(a.root, a.token)})
     elif a.sub == "classify":
@@ -879,6 +880,7 @@ def main(argv=None):
     s.add_argument("sub", choices=["arm", "disarm", "classify", "list"]); s.add_argument("--store-id"); s.add_argument("--account-id")
     s.add_argument("--id", help="approval id"); s.add_argument("--op"); s.add_argument("--items"); s.add_argument("--fresh")
     s.add_argument("--tool"); s.add_argument("--input", help="JSON: the exact tool input"); s.add_argument("--token"); s.add_argument("--map")
+    s.add_argument("--covers", help="JSON: staged input with the values (the *_propose input) for an *_apply call")
     s.add_argument("--ttl-minutes", type=float, default=gate.ARM_TTL_MINUTES); s.add_argument("--root", default=".nitaaq"); s.set_defaults(f=cmd_gate)
     s = sub.add_parser("state"); s.add_argument("sub", choices=["new", "stage", "move", "review-mode", "cancel", "resume", "show"])
     s.add_argument("--store-id", required=True); s.add_argument("--run"); s.add_argument("--question")
