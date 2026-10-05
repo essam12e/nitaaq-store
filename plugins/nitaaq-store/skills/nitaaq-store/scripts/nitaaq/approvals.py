@@ -11,8 +11,8 @@ expired, revoked, already used) needs a new approval. An unchanged, valid
 approval is never asked for again.
 
 This module records and checks approvals. It cannot stop a host from
-calling a tool on its own; on Claude Code an optional PreToolUse hook can
-enforce it (see references/salla-operator.md).
+calling a tool on its own; on Claude Code the plugin's PreToolUse hook
+enforces it for Salla tools (see gate.py and references/salla-operator.md).
 """
 
 from __future__ import annotations
