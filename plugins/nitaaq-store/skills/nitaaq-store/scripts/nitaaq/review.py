@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import re
 
-from . import contracts, metrics
+from . import contracts, cro, growth, metrics, pricing
 from .arabic import normalize
 from .evidence import CrossStoreError, EvidenceStore
 from .writes import same_value
@@ -25,6 +25,15 @@ CAUSAL = [normalize(x) for x in ("بسبب", "السبب هو", "السبب ال
 BENCHMARK = re.compile(r"(المعدل الطبيعي|المعدل المعتاد|متوسط السوق|متوسط القطاع|المعيار|المتاجر المشابهة|benchmark|"
                        r"industry average|عادة ما يكون|النسبة الطبيعية)", re.I)
 GUARANTEE = re.compile(r"(مضمون|نضمن|أكيد بي|اكيد بي|بالتأكيد سي|guarantee|guaranteed)", re.I)
+# A predicted effect stated as a number needs stated assumptions (expected_effect.kind == "range" with assumptions_ar).
+FORECAST = re.compile(r"(ستزيد|سيزيد|بتزيد|بيزيد|راح تزيد|راح يزيد|سترتفع|سيرتفع|بترتفع|بيرتفع|ستتضاعف|will increase|will grow)"
+                      r"[^.؟!\n]{0,40}?\d+\s*%", re.I)
+ELASTICITY = re.compile(r"(مرونه سعريه|مرونة سعرية|المرونة السعرية|elasticity)", re.I)
+DARK_PATTERN = re.compile(r"(اضف|أضف|حط|ضع|استخدم|فعّل|فعل)[^.\n]{0,25}(عداد تنازلي|عدادا تنازليا|باقي \d+ قطع|كمية محدودة|"
+                          r"تقييمات (?:إضافية|اضافية|وهمية|مكتوبة)|ندرة|fake urgency|countdown)", re.I)
+# metric -> evidence kinds it cannot exist without
+METRIC_NEEDS = {"conversion_rate": {"traffic", "analytics"}, "funnel": {"traffic", "analytics"},
+                "cac": {"ads"}, "roas": {"ads"}}
 PARTIAL_WORDS = ("جزئي", "جزئية", "ناقص", "غير مكتمل", "غير معروفة الاكتمال", "partial")
 
 ISSUES_AR = {
@@ -41,9 +50,14 @@ ISSUES_AR = {
     "partial_not_disclosed": "الدليل جزئي ولم يُذكر ذلك في الاستنتاج.",
     "calc_unsupported": "طريقة الحساب المذكورة غير مدعومة لإعادة الحساب.",
     "not_independent": "استنتاجان يتفقان لكنهما يعتمدان على نفس الدليل؛ هذا ليس تأكيداً مستقلاً.",
+    "unsupported_forecast": "توقع رقمي للنتيجة بدون افتراضات معلنة.",
+    "inferred_elasticity": "مرونة سعرية مذكورة بدون تجربة أو مصدر؛ لا نستنتجها من البيانات المتاحة.",
+    "dark_pattern": "اقتراح استعجال أو ندرة أو تقييمات غير حقيقية؛ ممنوع.",
+    "metric_without_data": "مقياس لا يمكن حسابه بدون بياناته (مثل معدل التحويل بدون زيارات).",
 }
 BLOCKING = {"schema", "wrong_store", "evidence_missing", "number_mismatch", "invalid_comparison", "unsupported_cause",
-            "high_confidence_cause", "unsourced_benchmark", "guarantee", "partial_not_disclosed"}
+            "high_confidence_cause", "unsourced_benchmark", "guarantee", "partial_not_disclosed",
+            "unsupported_forecast", "inferred_elasticity", "dark_pattern", "metric_without_data"}
 
 
 def _issue(code: str, detail: str = "") -> dict:
@@ -75,6 +89,24 @@ def _recompute(calc: dict, store: EvidenceStore):
         if row is None:
             return r, None, None, ev
         return r, row["current"], row["baseline"], ev
+    if calc["fn"] == "product_economics":
+        r = pricing.product_economics(records, prices_include_vat=calc.get("prices_include_vat"))
+        if calc.get("field") == "cost_missing_count":
+            return r, r["counts"]["cost_missing"], None, ev
+        row = next((x for x in r["rows"] if x["id"] == str(calc.get("entity"))), None)
+        return r, (row or {}).get(calc["field"]), None, ev
+    if calc["fn"] == "realized_price":
+        c = pricing.realized_prices(records, calc["current"], statuses=calc.get("statuses")).get(calc["product"], {})
+        b = pricing.realized_prices(records, calc["baseline"], statuses=calc.get("statuses")).get(calc["product"], {})
+        return None, c.get("avg_unit_price"), b.get("avg_unit_price"), ev
+    if calc["fn"] == "customer_mix":
+        r = growth.mix_change(records, calc["current"], calc["baseline"], statuses=calc.get("statuses"))
+        return r, r["current"][calc["field"]], r["baseline"][calc["field"]], ev
+    if calc["fn"] == "page_checks":
+        rec = next((x for x in records if (x.get("url") or x.get("id")) == calc["url"]), None)
+        if rec is None:
+            raise KeyError(calc["url"])
+        return None, cro.check_value(rec, calc["check"]), None, ev
     raise ValueError(calc["fn"])
 
 
@@ -129,6 +161,16 @@ def review_finding(f: dict, store: EvidenceStore, mode: str = "self_check") -> d
         issues.append(_issue("unsourced_benchmark"))
     if GUARANTEE.search(text):
         issues.append(_issue("guarantee"))
+    eff = f.get("expected_effect") or {}
+    if FORECAST.search(text) and not (eff.get("kind") == "range" and eff.get("assumptions_ar")):
+        issues.append(_issue("unsupported_forecast"))
+    if ELASTICITY.search(text) and not f.get("elasticity_source"):
+        issues.append(_issue("inferred_elasticity"))
+    if DARK_PATTERN.search(text):
+        issues.append(_issue("dark_pattern"))
+    need = METRIC_NEEDS.get(f.get("metric"))
+    if need and not any(e.get("kind") in need for e in evs):
+        issues.append(_issue("metric_without_data", f.get("metric")))
     blocking = any(i["severity"] == "blocking" for i in issues)
     status = "fail" if any(i["code"] in ("schema", "wrong_store", "evidence_missing", "number_mismatch") for i in issues) \
         else ("revise" if blocking else "pass")

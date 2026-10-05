@@ -131,10 +131,17 @@ def unified_report_ar(question: str, plan: dict, findings: list[dict], review: d
     for f in ok:
         flag = " ⚠️ تحتاج مراجعة" if rev.get(f["finding_id"], {}).get("status") == "revise" else ""
         out.append(f"**{f['interpretation_ar']}**{flag}")
-        out.append(f"الفترة: {_p(f['period'].get('current'))} مقابل {_p(f['period'].get('baseline'))}. التغطية: {f['coverage_note_ar']}")
-        out += ["", "| البند | الحالي | السابق |", "|---|---|---|"]
-        for o in f["observed"]:
-            out.append(f"| {o['label_ar']} | {o.get('current', '—')} | {o.get('baseline', '—')} |")
+        has_base = f["period"].get("baseline") is not None
+        if has_base:
+            out.append(f"الفترة: {_p(f['period'].get('current'))} مقابل {_p(f['period'].get('baseline'))}. التغطية: {f['coverage_note_ar']}")
+            out += ["", "| البند | الحالي | السابق |", "|---|---|---|"]
+            for o in f["observed"]:
+                out.append(f"| {o['label_ar']} | {o.get('current', '—')} | {o.get('baseline', '—')} |")
+        else:
+            out.append(f"الوضع الحالي. التغطية: {f['coverage_note_ar']}")
+            out += ["", "| البند | القيمة |", "|---|---|"]
+            for o in f["observed"]:
+                out.append(f"| {o['label_ar']} | {o.get('current', '—')} |")
         out.append("")
     causes = [f for f in ok if f.get("alternatives_ar") or f.get("claims_cause")]
     out += ["### الأسباب المحتملة", ""]
@@ -144,7 +151,7 @@ def unified_report_ar(question: str, plan: dict, findings: list[dict], review: d
             for a in f.get("alternatives_ar") or []:
                 out.append(f"  - احتمال آخر: {a}")
     else:
-        out.append("- ما عندنا دليل كافٍ يحدد السبب؛ الأرقام أعلاه توضح أين حدث التغير فقط.")
+        out.append("- ما عندنا دليل كافٍ يحدد سبباً؛ الأرقام أعلاه قياس لما هو موجود أو لمكان التغير فقط.")
     out += ["", "### ما لا نعرفه", ""]
     unknowns = list(plan.get("unknowns_ar") or [])
     for f in ok:

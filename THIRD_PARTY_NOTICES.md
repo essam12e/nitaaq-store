@@ -12,6 +12,9 @@ translated and narrowed to Salla stores.
 - Adapted files (see `upstream` in `plugins/nitaaq-store/skills/nitaaq-store/assets/agent-registry.json`), currently:
   - `support/support-analytics-reporter.md` → store analytics specialist
   - `testing/testing-reality-checker.md`, `research/research-synthesist.md` → reviewer
+  - `specialized/specialized-pricing-analyst.md` → pricing specialist
+  - `marketing/marketing-growth-hacker.md`, `project-management/project-management-experiment-tracker.md` → growth specialist
+  - `product/product-behavioral-nudge-engine.md` → conversion specialist (weak match, mostly custom)
 - Planned adaptations include the paid-media files authored by John Williams (@itallstartedwithaidea).
 
 ```

@@ -18,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from nitaaq import __version__  # noqa: E402
 from nitaaq import activation, capabilities, errors, exports, geo, gsc, products, redact, remediation, reports, seo_audit, tracking, visibility, writes  # noqa: E402
-from nitaaq import approvals, contracts, evidence, findings, metrics, registry, review, routing, state  # noqa: E402
+from nitaaq import approvals, contracts, cro, evidence, findings, growth, metrics, pricing, registry, review, routing, state  # noqa: E402
 
 
 def _out(obj):
@@ -433,6 +433,127 @@ def cmd_sales_change(a):
     _out(out)
 
 
+def _records(path):
+    d = _load(path)
+    if isinstance(d, dict):
+        d = d.get("records") or d.get("data") or d.get("products") or d.get("carts") or []
+    return d
+
+
+def _evidence_or_file(store, store_id, ev_id, path, op, total, source="mcp"):
+    """Load saved evidence, or save a file as new evidence. Returns (evidence, records)."""
+    if ev_id:
+        return store.load(ev_id)
+    if not path:
+        return None, None
+    recs = _orders(path) if op == "orders.list" else _records(path)
+    ev, unique = evidence.make_evidence(store_id, {"kind": source, "operation": op, "tool": Path(path).name}, recs,
+                                        records_total=total)
+    store.save(ev, unique)
+    return ev, unique
+
+
+def _finish(a, fs, props, store, plan_msg):
+    fs = [f for f in fs if f]
+    rv = review.review_all(fs, store, "self_check")
+    out = {"findings": fs, "proposals": props, "review": rv}
+    if getattr(a, "out", None):
+        Path(a.out).parent.mkdir(parents=True, exist_ok=True)
+        Path(a.out).write_text(json.dumps(out, ensure_ascii=False, indent=1, default=str), encoding="utf-8")
+    if getattr(a, "md", False):
+        print(findings.unified_report_ar(a.question or plan_msg, {}, json.loads(json.dumps(fs, default=str)), rv, props))
+        return
+    _out(out)
+
+
+def cmd_pricing(a):
+    store = evidence.EvidenceStore(a.root, a.store_id)
+    vat = {"yes": True, "no": False, None: None}[a.prices_include_vat]
+    pev, prods = _evidence_or_file(store, a.store_id, a.products_evidence, a.products, "products.list", a.total)
+    if pev is None:
+        raise ValueError("pass --products or --products-evidence")
+    econ = pricing.product_economics(prods, prices_include_vat=vat, deep_discount_pct=a.deep_discount)
+    fs = pricing.economics_findings(econ, pev, prices_include_vat=vat)
+    signals = []
+    oev, orders = _evidence_or_file(store, a.store_id, a.orders_evidence, a.orders, "orders.list", a.orders_total)
+    if oev is not None and a.current and a.baseline:
+        pc = pricing.price_changes(orders, _pair(a.current), _pair(a.baseline), threshold_pct=a.threshold)
+        signals += pc["signals"]
+        fs.append(pricing.price_change_finding(pc, oev, _pair(a.current), _pair(a.baseline), fid=f"p{len(fs) + 1}"))
+    if econ["counts"]["deep_discount"]:
+        signals.append("discount_heavy")
+    inv = next((f["finding_id"] for f in fs if f and "سعر التخفيض" in f["interpretation_ar"]), None)
+    props = pricing.invalid_sale_proposals(econ, a.store_id, inv) if inv else []
+    for f in fs:
+        if f:
+            f["signals"] = signals
+    _finish(a, fs, props, store, "هل أسعاري مناسبة؟")
+
+
+def cmd_breakeven(a):
+    _out(pricing.breakeven(a.price, a.cost, a.new_price))
+
+
+def cmd_growth(a):
+    if a.sub == "sample-size":
+        _out(growth.sample_size(a.baseline_rate, a.lift, daily_visitors_per_arm=a.daily))
+        return
+    if a.sub == "funnel":
+        _out(growth.funnel(_load(a.current_steps), _load(a.baseline_steps) if a.baseline_steps else None))
+        return
+    store = evidence.EvidenceStore(a.root, a.store_id)
+    ev, orders = _evidence_or_file(store, a.store_id, a.evidence_id, a.orders, "orders.list", a.total)
+    if ev is None:
+        raise ValueError("pass --orders or --evidence-id")
+    if a.sub == "cohorts":
+        _out(growth.cohorts(orders, as_of=a.as_of))
+        return
+    if a.current and a.baseline:
+        cur, base = _pair(a.current), _pair(a.baseline)
+    else:
+        from datetime import date
+        p = metrics.default_periods(a.today or date.today().isoformat(), a.days)
+        cur, base = p["current"], p["baseline"]
+    fod = _load(a.first_order_dates) if a.first_order_dates else None
+    mc = growth.mix_change(orders, cur, base, first_order_dates=fod)
+    _finish(a, [growth.mix_finding(mc, ev)], [], store, "مين اللي يشتري من متجري؟")
+
+
+def cmd_cro(a):
+    store = evidence.EvidenceStore(a.root, a.store_id)
+    products = dict(x.split("=", 1) for x in a.product or [])
+    pages = []
+    for spec in a.page or []:
+        url, path = spec.split("=", 1)
+        pages.append((url, Path(path).read_text(encoding="utf-8", errors="replace")))
+    for url in a.fetch or []:
+        from nitaaq import seo_audit
+        r = seo_audit.fetch(url)
+        if r.error or not r.body:
+            raise ValueError(f"could not fetch {url}: {r.error or r.status}")
+        pages.append((url, r.body))
+    fs, carts = [], None
+    if pages:
+        recs = [{"id": u, "url": u, "html": h, "product": _load(products[u]) if u in products else None} for u, h in pages]
+        ev, recs = evidence.make_evidence(a.store_id, {"kind": "public", "operation": "public.pages", "tool": "page"},
+                                          recs, records_total=len(recs), kind="public_page")
+        store.save(ev, recs)
+        for i, r in enumerate(recs, start=1):
+            fs.append(cro.page_finding(cro.page_checks(r["html"], r["url"], r.get("product")), ev, fid=f"c{i}"))
+    if a.carts:
+        carts = cro.abandoned_carts(_records(a.carts), _pair(a.period) if a.period else None)
+    if not fs and carts is None:
+        raise ValueError("pass --page, --fetch or --carts")
+    if not fs:
+        _out({"abandoned_carts": carts})
+        return
+    if carts is not None and not a.md:
+        rv = review.review_all(fs, store, "self_check")
+        _out({"findings": fs, "review": rv, "abandoned_carts": carts})
+        return
+    _finish(a, fs, [], store, "ليش الزوار ما يشترون؟")
+
+
 def cmd_report(a):
     plan = _load(a.plan) if a.plan else {}
     fs = _findings(a.findings)
@@ -544,6 +665,38 @@ def main(argv=None):
     s = sub.add_parser("report"); s.add_argument("--question", required=True); s.add_argument("--findings", required=True)
     s.add_argument("--plan"); s.add_argument("--review"); s.add_argument("--proposals"); s.add_argument("--store-id"); s.add_argument("--run")
     s.add_argument("--root", default=".nitaaq"); s.set_defaults(f=cmd_report)
+
+    # ---- phase 2 specialists
+    s = sub.add_parser("pricing"); s.add_argument("--store-id", required=True)
+    s.add_argument("--products"); s.add_argument("--products-evidence"); s.add_argument("--total", type=int)
+    s.add_argument("--orders"); s.add_argument("--orders-evidence"); s.add_argument("--orders-total", type=int)
+    s.add_argument("--current"); s.add_argument("--baseline"); s.add_argument("--threshold", type=float, default=5)
+    s.add_argument("--prices-include-vat", choices=["yes", "no"]); s.add_argument("--deep-discount", type=float, default=40)
+    s.add_argument("--question"); s.add_argument("--out"); s.add_argument("--md", action="store_true")
+    s.add_argument("--root", default=".nitaaq"); s.set_defaults(f=cmd_pricing)
+    s = sub.add_parser("pricing-breakeven"); s.add_argument("--price", required=True); s.add_argument("--cost", required=True)
+    s.add_argument("--new-price", required=True); s.set_defaults(f=cmd_breakeven)
+    s = sub.add_parser("growth"); gs = s.add_subparsers(dest="sub", required=True)
+    for name in ("mix", "cohorts"):
+        g = gs.add_parser(name); g.add_argument("--store-id", required=True); g.add_argument("--orders")
+        g.add_argument("--evidence-id"); g.add_argument("--total", type=int); g.add_argument("--root", default=".nitaaq")
+        if name == "mix":
+            g.add_argument("--current"); g.add_argument("--baseline"); g.add_argument("--today"); g.add_argument("--days", type=int, default=28)
+            g.add_argument("--first-order-dates", help="JSON {customer_id: date} from the store")
+            g.add_argument("--question"); g.add_argument("--out"); g.add_argument("--md", action="store_true")
+        else:
+            g.add_argument("--as-of")
+        g.set_defaults(f=cmd_growth)
+    g = gs.add_parser("funnel"); g.add_argument("--current-steps", required=True, help="JSON {sessions, product_views, add_to_cart, checkout, purchases}")
+    g.add_argument("--baseline-steps"); g.set_defaults(f=cmd_growth)
+    g = gs.add_parser("sample-size"); g.add_argument("--baseline-rate", required=True, help="e.g. 2 (percent) or 0.02")
+    g.add_argument("--lift", required=True, help="relative lift to detect, e.g. 20 (percent)"); g.add_argument("--daily", type=int, help="visitors per arm per day")
+    g.set_defaults(f=cmd_growth)
+    s = sub.add_parser("cro"); s.add_argument("--store-id", required=True)
+    s.add_argument("--page", action="append", help="URL=saved.html"); s.add_argument("--fetch", action="append", help="public URL")
+    s.add_argument("--product", action="append", help="URL=product.json (store price to match)")
+    s.add_argument("--carts"); s.add_argument("--period"); s.add_argument("--question"); s.add_argument("--out")
+    s.add_argument("--md", action="store_true"); s.add_argument("--root", default=".nitaaq"); s.set_defaults(f=cmd_cro)
 
     a = p.parse_args(argv)
     try:

@@ -35,6 +35,8 @@ INTENT_PHRASES: list[tuple[str, list[str]]] = [
     ("reviews", ["تقييمات", "التقييمات", "مراجعات العملاء", "شكاوي", "شكاوى", "شكوى", "اراء العملاء", "تعليقات العملاء"]),
     ("retention", ["رسايل للعملاء", "رساله للعملاء", "واتساب للعملاء", "ايميل للعملاء", "حمله بريد", "العملاء القدام",
                    "استرجاع العملاء", "برنامج ولاء", "العملاء المميزين", "win back"]),
+    ("growth", ["العملاء الجدد", "عملاء جدد", "تكرار الشراء", "العملاء ما يرجعون", "يرجعون يشترون", "معدل الاحتفاظ",
+                "اكتساب العملاء", "اكتساب عملاء", "تجربه a/b", "اختبار a/b", "ab test", "حجم العينه", "الافواج", "cohort"]),
     ("cro", ["صفحه المنتج ما تبيع", "معدل التحويل", "السلات المتروكه", "السلات المهجوره", "صفحه الدفع", "زر الشراء", "conversion"]),
     ("pricing", ["التسعير", "سعر مناسب", "اسعاري", "اسعار المنافسين", "هامش الربح", "الخصومات تضرني", "هل الخصم", "كم اسعر"]),
     ("strategy", ["استراتيجيه", "توسع", "منتج جديد يناسب", "سوق جديد", "خطه سنويه"]),
@@ -81,6 +83,8 @@ SIGNAL_ROUTES = {
     "complaints_up": ("customer_intelligence", "زادت الشكاوى أو التقييمات السلبية على منتجات مؤثرة."),
     "traffic_available": ("growth", "تتوفر بيانات زيارات لتحليل القمع."),
     "funnel_drop": ("cro", "يوجد هبوط في خطوة من القمع."),
+    "abandoned_carts_up": ("cro", "زادت السلات المتروكة."),
+    "discount_heavy": ("pricing", "منتجات مؤثرة عليها تخفيض كبير."),
     "ads_available": ("paid_media_auditor", "تتوفر بيانات حملات إعلانية."),
     "tracking_discrepancy": ("tracking", "فرق بين طلبات سلة والتحويلات المسجلة."),
     "search_terms_available": ("search_query_analyst", "يتوفر تقرير مصطلحات البحث."),
@@ -213,6 +217,9 @@ def _operator_reads(intent: str, available: set[str]) -> list[str]:
         "sales_change": ["orders.list", "orders.statuses", "reports.sales"],
         "sales_report": ["orders.list", "reports.sales", "reports.summary"],
         "broad_improvement": ["store.info", "orders.list", "products.list"],
+        "pricing": ["products.list", "orders.list", "coupons.list"],
+        "growth": ["orders.list", "customers.list"],
+        "cro": ["products.get", "carts.abandoned"],
         "simple_read": [],
     }.get(intent, [])
     return [w for w in wanted if w in available]
