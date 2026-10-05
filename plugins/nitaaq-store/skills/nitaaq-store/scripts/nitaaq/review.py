@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import re
 
-from . import contracts, cro, growth, metrics, pricing
+from . import contracts, cro, customer_intel, growth, metrics, pricing, seo_team
 from .arabic import normalize
 from .evidence import CrossStoreError, EvidenceStore
 from .writes import same_value
@@ -54,10 +54,12 @@ ISSUES_AR = {
     "inferred_elasticity": "مرونة سعرية مذكورة بدون تجربة أو مصدر؛ لا نستنتجها من البيانات المتاحة.",
     "dark_pattern": "اقتراح استعجال أو ندرة أو تقييمات غير حقيقية؛ ممنوع.",
     "metric_without_data": "مقياس لا يمكن حسابه بدون بياناته (مثل معدل التحويل بدون زيارات).",
+    "small_sample_not_disclosed": "العينة صغيرة ولم يُذكر ذلك.",
 }
 BLOCKING = {"schema", "wrong_store", "evidence_missing", "number_mismatch", "invalid_comparison", "unsupported_cause",
             "high_confidence_cause", "unsourced_benchmark", "guarantee", "partial_not_disclosed",
-            "unsupported_forecast", "inferred_elasticity", "dark_pattern", "metric_without_data"}
+            "unsupported_forecast", "inferred_elasticity", "dark_pattern", "metric_without_data",
+            "small_sample_not_disclosed"}
 
 
 def _issue(code: str, detail: str = "") -> dict:
@@ -107,6 +109,19 @@ def _recompute(calc: dict, store: EvidenceStore):
         if rec is None:
             raise KeyError(calc["url"])
         return None, cro.check_value(rec, calc["check"]), None, ev
+    if calc["fn"] == "seo_audit":
+        rec = next((x for x in records if (x.get("url") or x.get("id")) == calc["url"]), None)
+        if rec is None:
+            raise KeyError(calc["url"])
+        return None, calc["audit_id"] if calc["audit_id"] in seo_team.audit_ids(rec) else None, None, ev
+    if calc["fn"] == "cannibalization_gsc":
+        c = next((x for x in seo_team.cannibalization_gsc(records) if x["query"] == calc["query"]), None)
+        return None, len(c["pages"]) if c else None, None, ev
+    if calc["fn"] == "cannibalization_titles":
+        c = next((x for x in seo_team.cannibalization_titles(records, threshold=calc.get("threshold", 0.8)) if {x["a"], x["b"]} == {calc["a"], calc["b"]}), None)
+        return None, c["similarity"] if c else None, None, ev
+    if calc["fn"] == "review_themes":
+        return None, customer_intel.recompute(records, calc), None, ev
     raise ValueError(calc["fn"])
 
 
@@ -168,6 +183,10 @@ def review_finding(f: dict, store: EvidenceStore, mode: str = "self_check") -> d
         issues.append(_issue("inferred_elasticity"))
     if DARK_PATTERN.search(text):
         issues.append(_issue("dark_pattern"))
+    if f.get("metric") == "review_themes":
+        n = next((o.get("current") for o in f.get("observed") or [] if (o.get("calc") or {}).get("field") == "sample_size"), None)
+        if n is not None and int(str(n)) < customer_intel.SMALL_SAMPLE and "عينة صغيرة" not in text:
+            issues.append(_issue("small_sample_not_disclosed", str(n)))
     need = METRIC_NEEDS.get(f.get("metric"))
     if need and not any(e.get("kind") in need for e in evs):
         issues.append(_issue("metric_without_data", f.get("metric")))

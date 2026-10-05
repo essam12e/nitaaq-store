@@ -57,7 +57,7 @@ SIMPLE_READ = ["كم طلب", "كم عدد", "وش الطلبات", "اعرض", 
 INTENT_AGENTS = {
     "sales_change": ["store_analytics"],
     "sales_report": ["store_analytics"],
-    "broad_improvement": ["store_analytics", "pricing", "cro", "seo_geo", "tracking", "growth"],
+    "broad_improvement": ["store_analytics", "pricing", "growth", "cro", "seo_geo", "tracking"],
     "seo": ["seo_geo"],
     "pricing": ["pricing"],
     "ads": ["paid_media_auditor", "ppc", "search_query_analyst", "ad_creative", "paid_social"],
@@ -193,8 +193,10 @@ def route(message: str, available: set[str], reg: dict | None = None) -> dict:
         s["parallel_group"] = 0 if s["agent"] == base or not base else 1
     material = c["intent"] in ("sales_change", "broad_improvement", "strategy") or c["kind"] in ("recommendation",)
     reads = _operator_reads(c["intent"], available)
+    alts = {"reviews.list": ("reviews.list", "export:reviews"), "external:analytics": ("external:analytics", "export:analytics"),
+            "external:ads": ("external:ads", "export:ads")}
     unknown = [msg for tok, msg in UNKNOWN_WITHOUT.items()
-               if c["intent"] in ("sales_change", "broad_improvement") and tok not in available]
+               if c["intent"] in ("sales_change", "broad_improvement") and not any(t in available for t in alts.get(tok, (tok,)))]
     plan = {
         **c,
         "operator_reads": reads,
@@ -220,6 +222,8 @@ def _operator_reads(intent: str, available: set[str]) -> list[str]:
         "pricing": ["products.list", "orders.list", "coupons.list"],
         "growth": ["orders.list", "customers.list"],
         "cro": ["products.get", "carts.abandoned"],
+        "reviews": ["reviews.list", "orders.list"],
+        "seo": ["store.info", "products.list"],
         "simple_read": [],
     }.get(intent, [])
     return [w for w in wanted if w in available]

@@ -18,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from nitaaq import __version__  # noqa: E402
 from nitaaq import activation, capabilities, errors, exports, geo, gsc, products, redact, remediation, reports, seo_audit, tracking, visibility, writes  # noqa: E402
-from nitaaq import approvals, contracts, cro, evidence, findings, growth, metrics, pricing, registry, review, routing, state  # noqa: E402
+from nitaaq import approvals, contracts, cro, customer_intel, evidence, findings, growth, metrics, pricing, registry, review, routing, seo_team, state  # noqa: E402
 
 
 def _out(obj):
@@ -554,6 +554,70 @@ def cmd_cro(a):
     _finish(a, fs, [], store, "ليش الزوار ما يشترون؟")
 
 
+def cmd_seo_team(a):
+    store = evidence.EvidenceStore(a.root, a.store_id)
+    recs = []
+    for spec in a.page:
+        url, path = spec.split("=", 1)
+        recs.append({"id": url, "url": url, "html": Path(path).read_text(encoding="utf-8", errors="replace"),
+                     "page_type": a.page_type})
+    ev, recs = evidence.make_evidence(a.store_id, {"kind": "public", "operation": "public.pages", "tool": "page"},
+                                      recs, records_total=len(recs), kind="public_page")
+    store.save(ev, recs)
+    fs = []
+    for r in recs:
+        fs += seo_team.page_findings(r, ev, start=len(fs) + 1)
+    _finish(a, fs, [], store, "افحص ظهور متجري في محركات البحث")
+
+
+def cmd_cannibalization(a):
+    store = evidence.EvidenceStore(a.root, a.store_id)
+    if a.gsc:
+        if a.gsc.lower().endswith(".csv"):
+            headers, rows = exports.read_csv(a.gsc)
+            m = gsc._map(headers)  # same Arabic/English column names as gsc-performance
+            rows = [{m[h]: v for h, v in r.items() if h in m} for r in rows]
+        else:
+            rows = _records(a.gsc)
+        rows = [{**r, "id": f"{r.get('query')}|{r.get('page')}"} for r in rows]
+        ev, rows = evidence.make_evidence(a.store_id, {"kind": "export", "operation": "export.gsc", "tool": Path(a.gsc).name},
+                                          rows, records_total=len(rows), kind="gsc")
+        cands, basis = seo_team.cannibalization_gsc(rows), "gsc"
+    elif a.titles:
+        rows = _records(a.titles)
+        ev, rows = evidence.make_evidence(a.store_id, {"kind": "mcp", "operation": "products.list", "tool": Path(a.titles).name},
+                                          rows, records_total=len(rows))
+        cands, basis = seo_team.cannibalization_titles(rows, threshold=a.threshold), "titles"
+    else:
+        raise ValueError("pass --gsc or --titles")
+    store.save(ev, rows)
+    f = seo_team.cannibalization_finding(cands, ev, basis=basis, threshold=a.threshold)
+    _out({"basis": basis, "candidates": cands, "findings": [f] if f else [],
+          "review": review.review_all([f], store) if f else None})
+
+
+def cmd_reviews(a):
+    store = evidence.EvidenceStore(a.root, a.store_id)
+    ev, recs = _evidence_or_file(store, a.store_id, a.evidence_id, a.reviews, "reviews.list", a.total)
+    if ev is None:
+        raise ValueError("pass --reviews or --evidence-id")
+    fs, extra = [], {}
+    if a.current and a.baseline:
+        cmp = customer_intel.compare(recs, _pair(a.current), _pair(a.baseline), records_total=ev["coverage"]["records_total"])
+        f = customer_intel.themes_finding(cmp["current"], ev)
+        f["signals"] = cmp["signals"]
+        f["observed"].append({"label_ar": "نسبة التقييمات السلبية", "current": str(cmp["negative"]["current_rate_pct"]),
+                              "baseline": str(cmp["negative"]["baseline_rate_pct"])})
+        fs.append(f)
+        extra = {"comparison": {k: cmp[k] for k in ("negative", "theme_changes", "enough_sample", "signals")}}
+    else:
+        fs.append(customer_intel.themes_finding(customer_intel.analyze(recs, records_total=ev["coverage"]["records_total"]), ev))
+    if a.md or a.out:
+        _finish(a, fs, [], store, "وش يقولون العملاء عن منتجاتي؟")
+        return
+    _out({"findings": fs, "review": review.review_all(fs, store), **extra})
+
+
 def cmd_report(a):
     plan = _load(a.plan) if a.plan else {}
     fs = _findings(a.findings)
@@ -697,6 +761,20 @@ def main(argv=None):
     s.add_argument("--product", action="append", help="URL=product.json (store price to match)")
     s.add_argument("--carts"); s.add_argument("--period"); s.add_argument("--question"); s.add_argument("--out")
     s.add_argument("--md", action="store_true"); s.add_argument("--root", default=".nitaaq"); s.set_defaults(f=cmd_cro)
+
+    # ---- phase 3 specialists
+    s = sub.add_parser("seo-team"); s.add_argument("--store-id", required=True)
+    s.add_argument("--page", action="append", required=True, help="URL=saved.html"); s.add_argument("--page-type")
+    s.add_argument("--question"); s.add_argument("--out"); s.add_argument("--md", action="store_true")
+    s.add_argument("--root", default=".nitaaq"); s.set_defaults(f=cmd_seo_team)
+    s = sub.add_parser("cannibalization"); s.add_argument("--store-id", required=True)
+    s.add_argument("--gsc", help="Search Console rows with query and page (CSV or JSON)")
+    s.add_argument("--titles", help="JSON [{id|url, title|name}]"); s.add_argument("--threshold", type=float, default=0.8)
+    s.add_argument("--root", default=".nitaaq"); s.set_defaults(f=cmd_cannibalization)
+    s = sub.add_parser("reviews"); s.add_argument("--store-id", required=True); s.add_argument("--reviews")
+    s.add_argument("--evidence-id"); s.add_argument("--total", type=int); s.add_argument("--current"); s.add_argument("--baseline")
+    s.add_argument("--question"); s.add_argument("--out"); s.add_argument("--md", action="store_true")
+    s.add_argument("--root", default=".nitaaq"); s.set_defaults(f=cmd_reviews)
 
     a = p.parse_args(argv)
     try:

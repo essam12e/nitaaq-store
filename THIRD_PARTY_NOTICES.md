@@ -15,6 +15,8 @@ translated and narrowed to Salla stores.
   - `specialized/specialized-pricing-analyst.md` → pricing specialist
   - `marketing/marketing-growth-hacker.md`, `project-management/project-management-experiment-tracker.md` → growth specialist
   - `product/product-behavioral-nudge-engine.md` → conversion specialist (weak match, mostly custom)
+  - `marketing/marketing-seo-specialist.md`, `marketing/marketing-ai-citation-strategist.md` → SEO/GEO specialist
+  - `product/product-feedback-synthesizer.md` → customer intelligence specialist
 - Planned adaptations include the paid-media files authored by John Williams (@itallstartedwithaidea).
 
 ```
