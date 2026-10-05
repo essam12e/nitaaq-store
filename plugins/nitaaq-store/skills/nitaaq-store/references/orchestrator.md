@@ -38,6 +38,19 @@ never start other specialists (delegation depth 1).
 For "why did sales drop" the deterministic part is one command:
 `sales-change --store-id <id> --orders orders.json --total <reported> --md`.
 
+Active specialists and their commands:
+
+| Specialist | Needs | Command |
+|---|---|---|
+| [Store analytics](agents/store-analytics.md) | orders | `sales-change`, `metrics` |
+| [Pricing](agents/pricing.md) | products (orders optional) | `pricing`, `pricing-breakeven` |
+| [Growth](agents/growth.md) | orders (traffic for the funnel) | `growth mix`, `growth cohorts`, `growth funnel`, `growth sample-size` |
+| [Conversion](agents/cro.md) | public product pages (carts optional) | `cro` |
+
+Signals from one stage start a follow-up: `price_changed`/`discount_heavy` go to pricing,
+`funnel_drop`/`abandoned_carts_up` to conversion, `traffic_available` to growth,
+`stock_out` to the operator.
+
 ## Native subagents (optional)
 
 When the host offers subagents and the generated `nitaaq-*` agents are

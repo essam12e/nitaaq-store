@@ -243,7 +243,9 @@ class RoutingTests(unittest.TestCase):
         broad = routing.route("حلل متجري وقل لي وش أحسن", {"orders.list"})
         st = {s["agent"]: s["status"] for s in broad["stages"]}
         self.assertEqual(st["store_analytics"], "run")
-        self.assertEqual(st["pricing"], "not_available_yet")
+        self.assertEqual(st["pricing"], "blocked")  # active since phase 2, but no product data here
+        self.assertEqual(st["growth"], "run")
+        self.assertEqual(st["cro"], "blocked")
         self.assertEqual(st["seo_geo"], "existing_service")
         self.assertLessEqual(len(broad["specialists_to_run"]), registry.limits()["max_specialists_broad"])
         ads = routing.route("أوقف الحملات اللي ما تجيب مبيعات", {"orders.list"})
@@ -251,10 +253,11 @@ class RoutingTests(unittest.TestCase):
         self.assertEqual(routing.route("كم طلب جاني اليوم؟", {"orders.list"})["stages"], [])
 
     def test_followups(self):
-        f = routing.followups(["stock_out", "price_changed"], {"orders.list", "inventory.read"})
+        f = routing.followups(["stock_out", "price_changed", "complaints_up"], {"orders.list", "inventory.read"})
         by = {x["agent"]: x["status"] for x in f}
         self.assertEqual(by["salla_operator"], "run")
-        self.assertEqual(by["pricing"], "not_available_yet")
+        self.assertEqual(by["pricing"], "blocked")
+        self.assertEqual(by["customer_intelligence"], "not_available_yet")
 
 
 class ReviewTests(unittest.TestCase):
