@@ -795,7 +795,7 @@
   {
    "id": "paid_media_auditor",
    "kind": "specialist",
-   "status": "planned",
+   "status": "active",
    "phase": 5,
    "label_ar": "مدقق الإعلانات",
    "routing": {
@@ -815,18 +815,74 @@
       "export:ads"
      ]
     ],
-    "optional": []
+    "optional": [
+     "products.list",
+     "public:pages"
+    ]
    },
    "upstream": [
     {
-     "path": "paid-media/paid-media-auditor.md"
+     "path": "paid-media/paid-media-auditor.md",
+     "use": "audit axes (structure, tracking, bidding, keywords, ads, landing pages), severity ranking, change-history forensics; impact estimates become hypotheses; rejected: 200+ checkpoints, fixed 15-30% claims"
     }
-   ]
+   ],
+   "mission": "Audit an ad account from an export or an authorized tool: conversions recorded at all, campaigns spending without conversions, attributed ROAS against break-even ROAS from the margin, smart bidding on low volume, brand mixing and landing pages outside the store.",
+   "reference": "references/agents/paid-media-auditor.md",
+   "allowed_reads": [],
+   "evidence_rules": [
+    "ads_evidence_required",
+    "platform_attribution_stated",
+    "thresholds_stated"
+   ],
+   "uncertainty_rules": [
+    "roas_is_not_profit",
+    "no_diagnosis_from_salla_sales_alone"
+   ],
+   "direct_writes": "prohibited",
+   "input_schema": "schemas/task-envelope.json",
+   "output_schema": "schemas/finding.json",
+   "review": {
+    "required_when": [
+     "priority:high",
+     "claims_cause",
+     "action_proposal_sensitive"
+    ],
+    "reviewer": "reviewer"
+   },
+   "fallback": "sequential",
+   "version": "1.0.0",
+   "budget": {
+    "max_tool_calls": 20,
+    "max_evidence_records_in_context": 5000,
+    "max_minutes": 10
+   },
+   "native": {
+    "name": "nitaaq-paid-media-auditor",
+    "description": "Nitaaq Store internal ad account auditor. Reads saved ads export evidence and lists account issues with the numbers behind them. Read-only; never calls store or ad tools and never changes an ad account. Use only when the nitaaq-store skill delegates a paid_media_auditor stage.",
+    "claude_code": {
+     "tools": [
+      "Read",
+      "Grep",
+      "Glob",
+      "Bash"
+     ],
+     "disallowedTools": [
+      "Write",
+      "Edit",
+      "NotebookEdit",
+      "Agent",
+      "mcp__*"
+     ]
+    },
+    "codex": {
+     "sandbox_mode": "read-only"
+    }
+   }
   },
   {
    "id": "ppc",
    "kind": "specialist",
-   "status": "planned",
+   "status": "active",
    "phase": 5,
    "label_ar": "حملات Google",
    "routing": {
@@ -843,18 +899,72 @@
       "export:google_ads"
      ]
     ],
-    "optional": []
+    "optional": [
+     "products.list"
+    ]
    },
    "upstream": [
     {
-     "path": "paid-media/paid-media-ppc-strategist.md"
+     "path": "paid-media/paid-media-ppc-strategist.md",
+     "use": "brand / non-brand / competitor split, bid strategy by conversion volume, when Search vs Shopping vs PMax; rejected: executing structural changes directly, impression-share targets, $10M+ framing"
     }
-   ]
+   ],
+   "mission": "Read Google Ads structure: spend split between brand, generic and competitor searches, campaign types, and whether smart bidding has enough conversions.",
+   "reference": "references/agents/ppc.md",
+   "allowed_reads": [],
+   "evidence_rules": [
+    "ads_evidence_required",
+    "brand_terms_stated"
+   ],
+   "uncertainty_rules": [
+    "roas_is_not_profit",
+    "merchant_center_link_unverified"
+   ],
+   "direct_writes": "prohibited",
+   "input_schema": "schemas/task-envelope.json",
+   "output_schema": "schemas/finding.json",
+   "review": {
+    "required_when": [
+     "priority:high",
+     "claims_cause",
+     "action_proposal_sensitive"
+    ],
+    "reviewer": "reviewer"
+   },
+   "fallback": "sequential",
+   "version": "1.0.0",
+   "budget": {
+    "max_tool_calls": 20,
+    "max_evidence_records_in_context": 5000,
+    "max_minutes": 10
+   },
+   "native": {
+    "name": "nitaaq-ppc",
+    "description": "Nitaaq Store internal Google Ads specialist. Reads saved Google Ads export evidence for structure, brand split and bidding. Read-only; never calls store or ad tools and never changes an ad account. Use only when the nitaaq-store skill delegates a ppc stage.",
+    "claude_code": {
+     "tools": [
+      "Read",
+      "Grep",
+      "Glob",
+      "Bash"
+     ],
+     "disallowedTools": [
+      "Write",
+      "Edit",
+      "NotebookEdit",
+      "Agent",
+      "mcp__*"
+     ]
+    },
+    "codex": {
+     "sandbox_mode": "read-only"
+    }
+   }
   },
   {
    "id": "search_query_analyst",
    "kind": "specialist",
-   "status": "planned",
+   "status": "active",
    "phase": 5,
    "label_ar": "محلل مصطلحات البحث",
    "routing": {
@@ -878,14 +988,67 @@
    },
    "upstream": [
     {
-     "path": "paid-media/paid-media-search-query-analyst.md"
+     "path": "paid-media/paid-media-search-query-analyst.md",
+     "use": "n-gram analysis, intent classes, negative keyword tiers, keyword/negative conflict checks, brand leakage; zero-conversion flags need a click minimum and conversion lag; rejected: pushing negatives, fixed waste percentages"
     }
-   ]
+   ],
+   "mission": "Analyse a search terms report in Arabic and English: intent classes, n-grams, negative keyword candidates with conflicts removed, and brand terms served outside the brand campaign.",
+   "reference": "references/agents/search-query-analyst.md",
+   "allowed_reads": [],
+   "evidence_rules": [
+    "search_terms_report_required",
+    "conversion_lag_respected",
+    "min_clicks_stated"
+   ],
+   "uncertainty_rules": [
+    "negatives_are_proposals",
+    "no_negative_on_brand_or_converting_terms"
+   ],
+   "direct_writes": "prohibited",
+   "input_schema": "schemas/task-envelope.json",
+   "output_schema": "schemas/finding.json",
+   "review": {
+    "required_when": [
+     "priority:high",
+     "claims_cause",
+     "action_proposal_sensitive"
+    ],
+    "reviewer": "reviewer"
+   },
+   "fallback": "sequential",
+   "version": "1.0.0",
+   "budget": {
+    "max_tool_calls": 20,
+    "max_evidence_records_in_context": 5000,
+    "max_minutes": 10
+   },
+   "native": {
+    "name": "nitaaq-search-query-analyst",
+    "description": "Nitaaq Store internal search terms analyst. Reads saved search terms report evidence and proposes negative keywords with conflicts removed. Read-only; never calls store or ad tools and never changes an ad account. Use only when the nitaaq-store skill delegates a search_query_analyst stage.",
+    "claude_code": {
+     "tools": [
+      "Read",
+      "Grep",
+      "Glob",
+      "Bash"
+     ],
+     "disallowedTools": [
+      "Write",
+      "Edit",
+      "NotebookEdit",
+      "Agent",
+      "mcp__*"
+     ]
+    },
+    "codex": {
+     "sandbox_mode": "read-only"
+    }
+   }
   },
   {
    "id": "ad_creative",
    "kind": "specialist",
-   "status": "planned",
+   "status": "active",
    "phase": 5,
    "label_ar": "إبداعات الإعلانات",
    "routing": {
@@ -900,23 +1063,83 @@
      ],
      [
       "public:pages"
+     ],
+     [
+      "external:ads"
+     ],
+     [
+      "export:ads"
      ]
     ],
     "optional": [
-     "external:ads",
-     "export:ads"
+     "products.get"
     ]
    },
    "upstream": [
     {
-     "path": "paid-media/paid-media-creative-strategist.md"
+     "path": "paid-media/paid-media-creative-strategist.md",
+     "use": "RSA structure and character limits, hook-body-CTA, creative testing, fatigue detection, message match with the landing page; ad strength is a platform indicator, not a goal; rejected: 90%+ Good/Excellent targets, 20+ variations"
     }
-   ]
+   ],
+   "mission": "Draft Arabic ad copy from store facts only, check it against platform limits and unproven claims, and flag ads whose click rate fell over the period.",
+   "reference": "references/agents/ad-creative.md",
+   "allowed_reads": [
+    "products.list",
+    "products.get"
+   ],
+   "evidence_rules": [
+    "facts_from_store_data_only",
+    "draft_status_stated"
+   ],
+   "uncertainty_rules": [
+    "fatigue_is_a_candidate",
+    "no_fake_urgency"
+   ],
+   "direct_writes": "prohibited",
+   "input_schema": "schemas/task-envelope.json",
+   "output_schema": "schemas/finding.json",
+   "review": {
+    "required_when": [
+     "priority:high",
+     "claims_cause",
+     "action_proposal_sensitive"
+    ],
+    "reviewer": "reviewer"
+   },
+   "fallback": "sequential",
+   "version": "1.0.0",
+   "budget": {
+    "max_tool_calls": 20,
+    "max_evidence_records_in_context": 5000,
+    "max_minutes": 10
+   },
+   "native": {
+    "name": "nitaaq-ad-creative",
+    "description": "Nitaaq Store internal ad creative specialist. Drafts Arabic ad copy from saved product evidence, checks it against limits and claims, and reads saved ads evidence for fatigue. Read-only; never publishes ads or calls store or ad tools. Use only when the nitaaq-store skill delegates an ad_creative stage.",
+    "claude_code": {
+     "tools": [
+      "Read",
+      "Grep",
+      "Glob",
+      "Bash"
+     ],
+     "disallowedTools": [
+      "Write",
+      "Edit",
+      "NotebookEdit",
+      "Agent",
+      "mcp__*"
+     ]
+    },
+    "codex": {
+     "sandbox_mode": "read-only"
+    }
+   }
   },
   {
    "id": "paid_social",
    "kind": "specialist",
-   "status": "planned",
+   "status": "active",
    "phase": 5,
    "label_ar": "إعلانات السوشال",
    "routing": {
@@ -933,6 +1156,9 @@
       "external:tiktok"
      ],
      [
+      "external:snapchat"
+     ],
+     [
       "export:social_ads"
      ]
     ],
@@ -940,9 +1166,61 @@
    },
    "upstream": [
     {
-     "path": "paid-media/paid-media-paid-social-strategist.md"
+     "path": "paid-media/paid-media-paid-social-strategist.md",
+     "use": "full-funnel structure, audience exclusions, frequency control, attribution windows; rejected: LinkedIn and ABM, vertical benchmark targets"
     }
-   ]
+   ],
+   "mission": "Read Meta, TikTok or Snapchat ad sets: frequency, cost per result compared only within one objective and with enough results, and mixed attribution settings.",
+   "reference": "references/agents/paid-social.md",
+   "allowed_reads": [],
+   "evidence_rules": [
+    "ads_evidence_required",
+    "attribution_setting_stated"
+   ],
+   "uncertainty_rules": [
+    "compare_within_objective_only",
+    "small_results_not_ranked"
+   ],
+   "direct_writes": "prohibited",
+   "input_schema": "schemas/task-envelope.json",
+   "output_schema": "schemas/finding.json",
+   "review": {
+    "required_when": [
+     "priority:high",
+     "claims_cause",
+     "action_proposal_sensitive"
+    ],
+    "reviewer": "reviewer"
+   },
+   "fallback": "sequential",
+   "version": "1.0.0",
+   "budget": {
+    "max_tool_calls": 20,
+    "max_evidence_records_in_context": 5000,
+    "max_minutes": 10
+   },
+   "native": {
+    "name": "nitaaq-paid-social",
+    "description": "Nitaaq Store internal paid social specialist. Reads saved Meta, TikTok or Snapchat export evidence for frequency, cost per result and attribution settings. Read-only; never calls store or ad tools and never changes an ad account. Use only when the nitaaq-store skill delegates a paid_social stage.",
+    "claude_code": {
+     "tools": [
+      "Read",
+      "Grep",
+      "Glob",
+      "Bash"
+     ],
+     "disallowedTools": [
+      "Write",
+      "Edit",
+      "NotebookEdit",
+      "Agent",
+      "mcp__*"
+     ]
+    },
+    "codex": {
+     "sandbox_mode": "read-only"
+    }
+   }
   },
   {
    "id": "email_retention",

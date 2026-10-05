@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from nitaaq import __version__  # noqa: E402
 from nitaaq import activation, capabilities, errors, exports, geo, gsc, products, redact, remediation, reports, seo_audit, tracking, visibility, writes  # noqa: E402
-from nitaaq import approvals, contracts, cro, customer_intel, evidence, findings, growth, metrics, pricing, registry, review, routing, seo_team, state  # noqa: E402
+from nitaaq import ads, approvals, contracts, cro, customer_intel, evidence, findings, growth, metrics, pricing, registry, review, routing, seo_team, state  # noqa: E402
 
 
 def _out(obj):
@@ -655,6 +655,63 @@ def cmd_reconcile(a):
     _out({"reconciliation": res, "findings": [f], "review": review.review_all([f], store)})
 
 
+def _csv_or_json(path):
+    if str(path).lower().endswith(".csv"):
+        return exports.read_csv(path)[1]
+    return _records(path)
+
+
+def _list(v):
+    return [x.strip() for x in v.split(",") if x.strip()] if v else None
+
+
+ADS_PARAMS = {
+    "audit": ("min_clicks", "min_conversions", "margin_pct", "store_domains", "brand", "as_of", "lag_days"),
+    "structure": ("brand", "competitors", "min_conversions"),
+    "search_terms": ("brand", "competitors", "keywords", "negatives", "min_clicks", "as_of", "lag_days"),
+    "fatigue": ("min_impressions", "drop_pct"),
+    "social": ("frequency_limit", "min_results"),
+}
+
+
+def cmd_ads(a):
+    store = evidence.EvidenceStore(a.root, a.store_id)
+    kind = a.analysis.replace("-", "_")
+    if a.evidence_id:
+        ev, rows = store.load(a.evidence_id)
+    elif a.file:
+        rows = [{**r, "id": f"row-{i}"} for i, r in enumerate(_csv_or_json(a.file))]
+        ev, rows = evidence.make_evidence(a.store_id, {"kind": "export", "operation": f"export.{a.platform}",
+                                                       "tool": Path(a.file).name}, rows, records_total=a.total, kind="ads")
+        store.save(ev, rows)
+    else:
+        raise ValueError("pass --file (ads export) or --evidence-id")
+    given = {"min_clicks": a.min_clicks, "min_conversions": a.min_conversions, "margin_pct": a.margin,
+             "store_domains": _list(a.domains), "brand": _list(a.brand), "competitors": _list(a.competitors),
+             "keywords": _list(a.keywords), "negatives": _list(a.negatives), "as_of": a.as_of, "lag_days": a.lag_days,
+             "min_impressions": a.min_impressions, "drop_pct": a.drop_pct, "frequency_limit": a.frequency_limit,
+             "min_results": a.min_results}
+    params = {"platform": a.platform, **{k: given[k] for k in ADS_PARAMS[kind] if given[k] is not None}}
+    res = ads.run(kind, rows, params)
+    f = ads.finding(res, ev, params)
+    props = []
+    if kind == "search_terms":
+        p = ads.negatives_proposal(res, a.store_id, f["finding_id"])
+        if p:
+            f["proposed_action_ref"] = p["proposal_id"]
+            props.append(p)
+    if a.md or a.out:
+        _finish(a, [f], props, store, "كيف أداء إعلاناتي؟")
+        return
+    _out({"result": {k: v for k, v in res.items() if k != "metrics"}, "findings": [f], "proposals": props,
+          "review": review.review_all([f], store)})
+
+
+def cmd_ads_copy(a):
+    d = _load(a.copy)
+    _out(ads.rsa_check(d.get("headlines", []), d.get("descriptions", []), facts=_load(a.facts) if a.facts else d.get("facts")))
+
+
 def cmd_report(a):
     plan = _load(a.plan) if a.plan else {}
     fs = _findings(a.findings)
@@ -812,6 +869,22 @@ def main(argv=None):
     s.add_argument("--evidence-id"); s.add_argument("--total", type=int); s.add_argument("--current"); s.add_argument("--baseline")
     s.add_argument("--question"); s.add_argument("--out"); s.add_argument("--md", action="store_true")
     s.add_argument("--root", default=".nitaaq"); s.set_defaults(f=cmd_reviews)
+
+    s = sub.add_parser("ads", help="ads export analysis: audit, structure, search-terms, fatigue, social")
+    s.add_argument("analysis", choices=["audit", "structure", "search-terms", "fatigue", "social"])
+    s.add_argument("--store-id", required=True); s.add_argument("--file", help="ads export (CSV or JSON)"); s.add_argument("--evidence-id")
+    s.add_argument("--platform", default="google_ads", choices=["google_ads", "meta", "tiktok", "snapchat"])
+    s.add_argument("--total", type=int); s.add_argument("--brand"); s.add_argument("--competitors")
+    s.add_argument("--keywords"); s.add_argument("--negatives"); s.add_argument("--min-clicks", type=int)
+    s.add_argument("--min-conversions", type=int); s.add_argument("--margin", type=float, help="contribution margin %% for break-even ROAS")
+    s.add_argument("--domains", help="store domains for landing pages"); s.add_argument("--as-of"); s.add_argument("--lag-days", type=int)
+    s.add_argument("--min-impressions", type=int); s.add_argument("--drop-pct", type=int)
+    s.add_argument("--frequency-limit", type=float); s.add_argument("--min-results", type=int)
+    s.add_argument("--question"); s.add_argument("--out"); s.add_argument("--md", action="store_true")
+    s.add_argument("--root", default=".nitaaq"); s.set_defaults(f=cmd_ads)
+    s = sub.add_parser("ads-copy", help="check draft ad copy against limits and store facts")
+    s.add_argument("--copy", required=True, help="JSON {headlines: [...], descriptions: [...], facts?: {...}}")
+    s.add_argument("--facts"); s.set_defaults(f=cmd_ads_copy)
 
     s = sub.add_parser("reconcile", help="Salla orders vs a destination's purchases/conversions")
     s.add_argument("--store-id", required=True); s.add_argument("--period", required=True, help="YYYY-MM-DD,YYYY-MM-DD")

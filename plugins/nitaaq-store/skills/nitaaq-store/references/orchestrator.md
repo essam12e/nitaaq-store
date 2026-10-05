@@ -49,10 +49,17 @@ Active specialists and their commands:
 | [SEO/GEO](agents/seo-geo.md) | public pages (Search Console optional) | `seo-team`, `cannibalization` (plus the existing SEO/GEO commands) |
 | [Customer intelligence](agents/customer-intelligence.md) | reviews or complaints | `reviews` |
 | [Tracking](agents/tracking.md) | public pages for levels 1–2; orders plus a GA4 or ads export for reconciliation | `tracking`, `reconcile` |
+| [Ads auditor](agents/paid-media-auditor.md) | any ads export or authorized ads tool | `ads audit` |
+| [Google Ads](agents/ppc.md) | Google Ads export or tool | `ads structure` |
+| [Search terms](agents/search-query-analyst.md) | search terms report | `ads search-terms` |
+| [Ad creative](agents/ad-creative.md) | products or public pages (ads data for fatigue) | `ads-copy`, `ads fatigue` |
+| [Paid social](agents/paid-social.md) | Meta, TikTok or Snapchat export or tool | `ads social` |
 
 Signals from one stage start a follow-up: `price_changed`/`discount_heavy` go to pricing,
 `funnel_drop`/`abandoned_carts_up` to conversion, `traffic_available` to growth,
-`stock_out` to the operator, `complaints_up` to customer intelligence, `tracking_discrepancy` to tracking.
+`stock_out` to the operator, `complaints_up` to customer intelligence, `tracking_discrepancy` to tracking, `ads_available` to the ads auditor, `search_terms_available` to the search terms analyst.
+
+Ads questions run the specialist the message is about (search terms, copy, social, Google) or the auditor. Ads changes (pause, negatives, budgets) are never executed: the route's `execution_path` is `ads_proposal_only`, and the merchant applies an approved proposal in the platform.
 
 ## Native subagents (optional)
 
