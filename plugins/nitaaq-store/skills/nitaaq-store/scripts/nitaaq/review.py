@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import re
 
-from . import ads, contracts, cro, customer_intel, growth, metrics, pricing, seo_team, tracking
+from . import ads, contracts, cro, customer_intel, growth, metrics, pricing, retention, seo_team, tracking
 from .arabic import normalize
 from .evidence import CrossStoreError, EvidenceStore
 from .writes import same_value
@@ -40,6 +40,8 @@ PROFIT_CLAIM = re.compile(r"(مربح|مربحة|ربحانة|ربحانه|تر�
 # Ad account changes are proposals; a finding never says they were made.
 ADS_EXECUTED = re.compile(r"(أوقفنا|اوقفنا|أوقفت الحمل|اوقفت الحمل|أضفنا الكلمات|اضفنا الكلمات|طبقنا|غيرنا الميزانية|"
                           r"غيّرنا الميزانية|رفعنا الميزانية|نزلنا الميزانية)", re.I)
+# Messages to customers are drafts until the send gate passes; a finding never says they went out.
+MESSAGE_SENT = re.compile(r"(أرسلنا|ارسلنا|تم إرسال|تم ارسال|انرسلت|راحت الرسالة|وصلت الرسالة للعملاء)", re.I)
 # "Tracking is broken" needs a captured real purchase that fired no purchase event (reconcile status event_missing).
 TRACKING_WORD = re.compile(r"(تتبع|التتبع|بكسل|البكسل|pixel|ga4|capi|tracking)", re.I)
 TRACKING_FAULT = re.compile(r"(خربان|خربانه|خربانة|معطل|متعطل|عطل|لا يعمل|ما يشتغل|مايشتغل|broken|not working)", re.I)
@@ -68,12 +70,13 @@ ISSUES_AR = {
     "totals_not_disclosed": "مقارنة مجاميع بدون ذكر أنها لا تثبت أي طلب مفقود.",
     "roas_as_profit": "العائد على الإنفاق الإعلاني مقدم كربح؛ الربحية تحتاج الهامش.",
     "claimed_ads_execution": "يقول إن تغييراً نُفذ في الحساب الإعلاني؛ تغييرات الإعلانات اقتراحات بموافقة فقط.",
+    "claimed_message_sent": "يقول إن رسائل أُرسلت للعملاء؛ الرسائل مسودات حتى تمر بالموافقة وموافقة العميل.",
 }
 BLOCKING = {"schema", "wrong_store", "evidence_missing", "number_mismatch", "invalid_comparison", "unsupported_cause",
             "high_confidence_cause", "unsourced_benchmark", "guarantee", "partial_not_disclosed",
             "unsupported_forecast", "inferred_elasticity", "dark_pattern", "metric_without_data",
             "small_sample_not_disclosed", "tracking_fault_unsupported", "totals_not_disclosed",
-            "roas_as_profit", "claimed_ads_execution"}
+            "roas_as_profit", "claimed_ads_execution", "claimed_message_sent"}
 
 
 def _issue(code: str, detail: str = "") -> dict:
@@ -136,6 +139,8 @@ def _recompute(calc: dict, store: EvidenceStore):
         return None, c["similarity"] if c else None, None, ev
     if calc["fn"] == "review_themes":
         return None, customer_intel.recompute(records, calc), None, ev
+    if calc["fn"] == "retention_segments":
+        return None, retention.recompute(records, calc), None, ev
     if calc["fn"] == "ads":
         return None, ads.recompute(records, calc), None, ev
     if calc["fn"] == "tracking_reconcile":
@@ -216,6 +221,8 @@ def review_finding(f: dict, store: EvidenceStore, mode: str = "self_check") -> d
         issues.append(_issue("roas_as_profit"))
     if ADS_EXECUTED.search(interp):
         issues.append(_issue("claimed_ads_execution"))
+    if MESSAGE_SENT.search(interp):
+        issues.append(_issue("claimed_message_sent"))
     need = METRIC_NEEDS.get(f.get("metric"))
     if need and not any(e.get("kind") in need for e in evs):
         issues.append(_issue("metric_without_data", f.get("metric")))

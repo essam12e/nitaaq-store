@@ -1225,7 +1225,7 @@
   {
    "id": "email_retention",
    "kind": "specialist",
-   "status": "planned",
+   "status": "active",
    "phase": 6,
    "label_ar": "الاحتفاظ والرسائل",
    "routing": {
@@ -1236,24 +1236,87 @@
    "capabilities": {
     "required_any": [
      [
-      "orders.list",
-      "customers.list"
+      "orders.list"
+     ],
+     [
+      "export:orders"
      ]
     ],
     "optional": [
-     "external:email"
+     "customers.list",
+     "export:customers",
+     "external:email",
+     "external:sms",
+     "external:whatsapp"
     ]
    },
    "upstream": [
     {
-     "path": "marketing/marketing-email-strategist.md"
+     "path": "marketing/marketing-email-strategist.md",
+     "use": "segmentation on at least two attributes, lifecycle stages, mandatory exit conditions, consent is infrastructure, clicks before opens, operational vs marketing messages kept apart; rejected: dated benchmark rates"
     }
-   ]
+   ],
+   "mission": "Segment customers from orders, keep only customers whose marketing consent is recorded for the channel, draft and check messages, and prepare a send proposal that needs the merchant's approval. Never sends.",
+   "reference": "references/agents/email-retention.md",
+   "allowed_reads": [
+    "orders.list",
+    "customers.list"
+   ],
+   "evidence_rules": [
+    "consent_recorded_per_channel",
+    "ids_not_contacts_in_output",
+    "segment_rules_stated"
+   ],
+   "uncertainty_rules": [
+    "unknown_consent_is_no_consent",
+    "no_send_without_approval_and_sender",
+    "no_return_promised"
+   ],
+   "budget": {
+    "max_tool_calls": 20,
+    "max_evidence_records_in_context": 5000,
+    "max_minutes": 10
+   },
+   "direct_writes": "prohibited",
+   "input_schema": "schemas/task-envelope.json",
+   "output_schema": "schemas/finding.json",
+   "review": {
+    "required_when": [
+     "priority:high",
+     "claims_cause",
+     "action_proposal_sensitive"
+    ],
+    "reviewer": "reviewer"
+   },
+   "fallback": "sequential",
+   "version": "1.0.0",
+   "native": {
+    "name": "nitaaq-email-retention",
+    "description": "Nitaaq Store internal retention specialist. Segments customers from saved order evidence, filters by recorded consent and checks draft messages. Read-only; never sends messages or calls store tools. Use only when the nitaaq-store skill delegates an email_retention stage.",
+    "claude_code": {
+     "tools": [
+      "Read",
+      "Grep",
+      "Glob",
+      "Bash"
+     ],
+     "disallowedTools": [
+      "Write",
+      "Edit",
+      "NotebookEdit",
+      "Agent",
+      "mcp__*"
+     ]
+    },
+    "codex": {
+     "sandbox_mode": "read-only"
+    }
+   }
   },
   {
    "id": "business_strategist",
    "kind": "specialist",
-   "status": "planned",
+   "status": "active",
    "phase": 6,
    "label_ar": "الاستراتيجي",
    "routing": {
@@ -1268,6 +1331,9 @@
      ],
      [
       "export:orders"
+     ],
+     [
+      "reports.sales"
      ]
     ],
     "optional": [
@@ -1276,9 +1342,63 @@
    },
    "upstream": [
     {
-     "path": "specialized/business-strategist.md"
+     "path": "specialized/business-strategist.md",
+     "use": "strategy is a choice about what not to do, test assumptions, correlation is not causation, scenarios beat point forecasts, honest bad news; quantify only from evidence; rejected: TAM examples, generic consulting frameworks"
     }
-   ]
+   ],
+   "mission": "Turn reviewed findings from at least two specialists into a few priorities, what to postpone and the assumptions behind them, without new numbers or forecasts.",
+   "reference": "references/agents/business-strategist.md",
+   "allowed_reads": [],
+   "evidence_rules": [
+    "two_specialists_minimum",
+    "cites_reviewed_findings_only",
+    "no_new_numbers"
+   ],
+   "uncertainty_rules": [
+    "same_evidence_counts_once",
+    "seasons_are_context_not_evidence",
+    "no_point_forecasts"
+   ],
+   "budget": {
+    "max_tool_calls": 10,
+    "max_evidence_records_in_context": 200,
+    "max_minutes": 10
+   },
+   "direct_writes": "prohibited",
+   "input_schema": "schemas/task-envelope.json",
+   "output_schema": "schemas/finding.json",
+   "review": {
+    "required_when": [
+     "priority:high",
+     "claims_cause",
+     "action_proposal_sensitive"
+    ],
+    "reviewer": "reviewer"
+   },
+   "fallback": "sequential",
+   "version": "1.0.0",
+   "native": {
+    "name": "nitaaq-business-strategist",
+    "description": "Nitaaq Store internal business strategist. Reads reviewed findings from other specialists and proposes a few priorities and what to postpone, without new numbers. Read-only; never calls store tools. Use only when the nitaaq-store skill delegates a business_strategist stage after two or more specialists.",
+    "claude_code": {
+     "tools": [
+      "Read",
+      "Grep",
+      "Glob",
+      "Bash"
+     ],
+     "disallowedTools": [
+      "Write",
+      "Edit",
+      "NotebookEdit",
+      "Agent",
+      "mcp__*"
+     ]
+    },
+    "codex": {
+     "sandbox_mode": "read-only"
+    }
+   }
   }
  ],
  "upstream_repository": {

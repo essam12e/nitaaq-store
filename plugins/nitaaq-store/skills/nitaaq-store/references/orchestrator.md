@@ -54,12 +54,16 @@ Active specialists and their commands:
 | [Search terms](agents/search-query-analyst.md) | search terms report | `ads search-terms` |
 | [Ad creative](agents/ad-creative.md) | products or public pages (ads data for fatigue) | `ads-copy`, `ads fatigue` |
 | [Paid social](agents/paid-social.md) | Meta, TikTok or Snapchat export or tool | `ads social` |
+| [Retention](agents/email-retention.md) | orders (customers with consent for audiences) | `retention segments|audience|check-message|propose`, `send-gate` |
+| [Strategist](agents/business-strategist.md) | reviewed findings of two or more specialists | `strategy` |
 
 Signals from one stage start a follow-up: `price_changed`/`discount_heavy` go to pricing,
 `funnel_drop`/`abandoned_carts_up` to conversion, `traffic_available` to growth,
 `stock_out` to the operator, `complaints_up` to customer intelligence, `tracking_discrepancy` to tracking, `ads_available` to the ads auditor, `search_terms_available` to the search terms analyst.
 
 Ads questions run the specialist the message is about (search terms, copy, social, Google) or the auditor. Ads changes (pause, negatives, budgets) are never executed: the route's `execution_path` is `ads_proposal_only`, and the merchant applies an approved proposal in the platform.
+
+Strategy questions run up to four specialists and then the strategist, which depends on them and is blocked with fewer than two. Sending messages (`execution_path` `message_send_gate`) needs a sending tool, the merchant's approval of the exact text and recipients, and `send-gate` passing on consent read just now.
 
 ## Native subagents (optional)
 
