@@ -304,6 +304,13 @@ def cmd_metrics(a):
         from datetime import date
         _out(metrics.default_periods(a.today or date.today().isoformat(), a.days))
         return
+    if a.sub == "decompose-rows":
+        def rows(path):
+            d = _load(path)
+            return d.get("rows", d) if isinstance(d, dict) else d
+        _out(metrics.decompose_rows(rows(a.current_rows), rows(a.baseline_rows), a.label, a.value, top=a.top,
+                                    exclude=a.exclude.split(",") if a.exclude else None, overlapping=a.overlapping))
+        return
     orders = _orders(a.orders)
     statuses = a.statuses.split(",") if a.statuses else None
     if a.sub == "compare":
@@ -433,6 +440,16 @@ def cmd_sales_change(a):
                                        finding_id=f"f{i}")
             if w:
                 fs.append(w)
+    if a.reported_current and a.reported_baseline:
+        def _rep(v):
+            parts = v.split(",")
+            return parts[0], (int(parts[1]) if len(parts) > 1 and parts[1] else None)
+        checks = {}
+        for k, period, v in (("current", cur, a.reported_current), ("baseline", base, a.reported_baseline)):
+            sales, n = _rep(v)
+            checks[k] = metrics.reconcile_report(orders, period, sales, statuses=statuses, reported_orders=n)
+        cmp["source_check"] = checks
+        fs.append(findings.source_check_finding(checks, ev, cmp))
     for f in fs:  # pin the clock so the reviewer recomputes the same partial-day check
         for o in f["observed"]:
             if isinstance(o.get("calc"), dict) and o["calc"]["fn"] == "compare_periods":
@@ -784,7 +801,8 @@ def cmd_strategy(a):
 
 
 def cmd_report(a):
-    plan = _load(a.plan) if a.plan else {}
+    # Without a saved plan, route the question so the report still lists what we cannot know.
+    plan = _load(a.plan) if a.plan else routing.route(a.question, set((a.available or "orders.list").split(",")))
     fs = _findings(a.findings)
     rv = _load(a.review) if a.review else (_load(a.findings).get("review") if isinstance(_load(a.findings), dict) else None)
     props = _load(a.proposals) if a.proposals else None
@@ -864,6 +882,11 @@ def main(argv=None):
         else:
             m.add_argument("--dimension", required=True); m.add_argument("--top", type=int, default=10)
         m.set_defaults(f=cmd_metrics)
+    m = ms.add_parser("decompose-rows", help="where the change happened, from two report breakdowns (e.g. sales by category)")
+    m.add_argument("--current-rows", required=True); m.add_argument("--baseline-rows", required=True)
+    m.add_argument("--label", required=True); m.add_argument("--value", required=True); m.add_argument("--exclude")
+    m.add_argument("--overlapping", action="store_true", help="one sale can sit under several rows (categories)")
+    m.add_argument("--top", type=int, default=10); m.set_defaults(f=cmd_metrics)
     s = sub.add_parser("evidence"); es = s.add_subparsers(dest="sub", required=True)
     e = es.add_parser("make"); e.add_argument("--store-id", required=True); e.add_argument("--records", required=True)
     e.add_argument("--op", required=True); e.add_argument("--source", default="mcp", choices=["mcp", "export", "public", "report_tool", "merchant"])
@@ -896,8 +919,11 @@ def main(argv=None):
     s.add_argument("--total", type=int, help="total records the source reported"); s.add_argument("--pages", type=int)
     s.add_argument("--source", default="mcp", choices=["mcp", "export"]); s.add_argument("--tool"); s.add_argument("--evidence-id")
     s.add_argument("--now"); s.add_argument("--question"); s.add_argument("--out"); s.add_argument("--md", action="store_true")
+    s.add_argument("--reported-current", help="the platform report for the current period: SALES[,ORDERS]")
+    s.add_argument("--reported-baseline", help="the platform report for the baseline period: SALES[,ORDERS]")
     s.add_argument("--root", default=".nitaaq"); s.set_defaults(f=cmd_sales_change)
     s = sub.add_parser("report"); s.add_argument("--question", required=True); s.add_argument("--findings", required=True)
+    s.add_argument("--available", help="capabilities used to route the question when no --plan is given (default orders.list)")
     s.add_argument("--plan"); s.add_argument("--review"); s.add_argument("--proposals"); s.add_argument("--store-id"); s.add_argument("--run")
     s.add_argument("--root", default=".nitaaq"); s.set_defaults(f=cmd_report)
 

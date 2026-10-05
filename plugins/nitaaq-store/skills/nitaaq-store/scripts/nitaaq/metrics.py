@@ -22,6 +22,10 @@ from .reports import RIYADH, filter_orders, parse_dt, sales_summary
 METRICS_PATH = Path(__file__).resolve().parents[2] / "assets" / "metrics.json"
 TWO = Decimal("0.01")
 SMALL_SAMPLE_ORDERS = 30
+# Below this total change (as % of the baseline) per-value shares of the change are noise
+# (a near-zero denominator gives shares like 2550%), so they are not shown.
+SHARE_MIN_PCT = Decimal("3")
+SHARES_HIDDEN_AR = "التغير الكلي صغير جداً، فنسبة مساهمة كل بند فيه ما لها معنى؛ نعرض الفرق بالريال فقط."
 
 FLAGS_AR = {
     "partial_current_day": "الفترة الحالية تشمل يوماً لم ينتهِ بعد؛ المقارنة غير عادلة إلا بعد اكتماله.",
@@ -209,17 +213,124 @@ def decompose(orders: list[dict], current, baseline, dimension: str, *, definiti
     base, _ = filter_orders(unique, _d(baseline[0]).isoformat(), _d(baseline[1]).isoformat(), statuses)
     ac, mc = _buckets(cur, dimension, definition)
     ab, mb = _buckets(base, dimension, definition)
+    basis = "item_revenue" if dimension in ("product", "category", "brand") else definition
+    out = _contributions(ac, ab, top)
+    out.update({"dimension": dimension, "basis": basis, "lines_without_value": {"current": mc, "baseline": mb}})
+    return out
+
+
+def _contributions(ac: dict, ab: dict, top: int) -> dict:
     total_delta = sum(ac.values(), Decimal(0)) - sum(ab.values(), Decimal(0))
+    base_total = sum(ab.values(), Decimal(0))
+    shares_ok = bool(total_delta) and (not base_total or abs(total_delta) / abs(base_total) * 100 >= SHARE_MIN_PCT)
     rows = []
     for k in set(ac) | set(ab):
         d = ac.get(k, Decimal(0)) - ab.get(k, Decimal(0))
-        share = (d / total_delta * 100).quantize(Decimal("0.1"), ROUND_HALF_UP) if total_delta else None
+        share = (d / total_delta * 100).quantize(Decimal("0.1"), ROUND_HALF_UP) if shares_ok else None
         rows.append({"value": k, "current": ac.get(k, Decimal(0)), "baseline": ab.get(k, Decimal(0)),
                      "change": d, "share_of_change_pct": share})
     rows.sort(key=lambda r: (r["change"], r["value"]) if total_delta < 0 else (-r["change"], r["value"]))
-    basis = "item_revenue" if dimension in ("product", "category", "brand") else definition
-    return {"dimension": dimension, "basis": basis, "total_change": total_delta, "rows": rows[:top],
-            "rows_total": len(rows), "lines_without_value": {"current": mc, "baseline": mb}}
+    out = {"total_change": total_delta, "rows": rows[:top], "rows_total": len(rows), "shares_shown": shares_ok}
+    if not shares_ok:
+        out["shares_note_ar"] = SHARES_HIDDEN_AR
+    return out
+
+
+def decompose_rows(current_rows: list[dict], baseline_rows: list[dict], label: str, value: str, *,
+                   top: int = 10, exclude: list[str] | None = None, overlapping: bool = False) -> dict:
+    """Where did the change happen, from two report breakdowns (e.g. Salla's sales by category).
+
+    For sources that already aggregate per value, such as a report row per
+    category with its sales. `overlapping` says one sale can sit under several
+    rows (a product in two categories), so rows do not add up to the store
+    total and shares are not shown.
+    """
+    skip = set(exclude or [])
+
+    def agg(rows):
+        out: dict = defaultdict(lambda: Decimal(0))
+        missing = 0
+        for r in rows:
+            k = str(r.get(label) or "غير محدد")
+            if k in skip:
+                continue
+            v = parse_amount(r.get(value))
+            if v is None:
+                missing += 1
+                continue
+            out[k] += Decimal(str(v))
+        return out, missing
+    ac, mc = agg(current_rows)
+    ab, mb = agg(baseline_rows)
+    out = _contributions(ac, ab, 10 ** 6)
+    # report rows are few and mixed in direction: biggest movers first, up or down
+    out["rows"] = sorted(out["rows"], key=lambda r: (-abs(r["change"]), r["value"]))[:top]
+    if overlapping:
+        for r in out["rows"]:
+            r["share_of_change_pct"] = None
+        out["shares_shown"] = False
+        out["shares_note_ar"] = "البيع الواحد ممكن ينحسب تحت أكثر من بند (منتج في أكثر من تصنيف)، فالبنود ما تنجمع؛ نعرض الفرق بالريال فقط."
+    out.update({"dimension": label, "basis": value, "excluded": sorted(skip), "rows_without_value": {"current": mc, "baseline": mb}})
+    return out
+
+
+def reconcile_report(orders: list[dict], period, reported_sales, *, statuses: list[str] | None = None,
+                     reported_orders: int | None = None, definition: str = "order_total", key: str = "id",
+                     tolerance=Decimal("1")) -> dict:
+    """Compare our total for a period with the platform's own report and explain the gap.
+
+    The gap is attributed only when including or excluding whole order
+    statuses reproduces the reported figure within `tolerance`; otherwise it
+    stays unexplained and is said so.
+    """
+    unique, _ = dedupe(orders, key)
+    rows, _ = filter_orders(unique, _d(period[0]).isoformat(), _d(period[1]).isoformat(), None)
+    by_status: dict = defaultdict(lambda: [Decimal(0), 0])
+    for o in rows:
+        v = sales_summary([o], definition)["sales"]
+        if v is None:
+            continue
+        st = str(o.get("status") or "غير محدد")
+        by_status[st][0] += Decimal(str(v))
+        by_status[st][1] += 1
+    chosen = set(statuses) if statuses else set(by_status)
+    ours = sum((by_status[s][0] for s in chosen if s in by_status), Decimal(0))
+    ours_n = sum(by_status[s][1] for s in chosen if s in by_status)
+    reported = Decimal(str(parse_amount(reported_sales)))
+    gap = (ours - reported).quantize(TWO, ROUND_HALF_UP)
+    out = {"period": [str(period[0]), str(period[1])], "ours": ours.quantize(TWO, ROUND_HALF_UP), "ours_orders": ours_n,
+           "reported": reported, "reported_orders": reported_orders, "gap": gap,
+           "by_status": {s: {"sales": v[0].quantize(TWO, ROUND_HALF_UP), "orders": v[1]} for s, v in sorted(by_status.items())},
+           "matches": abs(gap) <= tolerance, "explained_by": None}
+    if out["matches"]:
+        out["explanation_ar"] = "رقمنا يطابق تقرير المنصة."
+        return out
+    from itertools import combinations
+    names = sorted(by_status)
+    best = None
+    for n in range(1, min(len(names), 6) + 1):
+        for combo in combinations(names, n):
+            alt = chosen ^ set(combo)  # toggle these statuses in or out
+            total = sum((by_status[s][0] for s in alt), Decimal(0))
+            if abs(total - reported) <= tolerance:
+                best = (combo, alt)
+                break
+        if best:
+            break
+    if best:
+        combo, alt = best
+        out_s = [s for s in combo if s in chosen]
+        in_s = [s for s in combo if s not in chosen]
+        parts = []
+        if out_s:
+            parts.append("التقرير ما يحسب الطلبات بحالة " + "، ".join(f"«{s}»" for s in out_s))
+        if in_s:
+            parts.append("التقرير يحسب الطلبات بحالة " + "، ".join(f"«{s}»" for s in in_s))
+        out["explained_by"] = {"excluded_in_report": out_s, "included_in_report": in_s}
+        out["explanation_ar"] = f"الفرق {abs(gap):,} يساوي مجموع طلبات بحالات محددة: " + "؛ و".join(parts) + "."
+    else:
+        out["explanation_ar"] = f"الفرق {abs(gap):,} ما قدرنا نفسره بحالات الطلبات؛ ممكن يكون تعريف مختلف (ضريبة، شحن، خصم) أو توقيت تحديث التقرير."
+    return out
 
 
 def comparison_markdown_ar(cmp: dict, currency: str = "SAR") -> str:

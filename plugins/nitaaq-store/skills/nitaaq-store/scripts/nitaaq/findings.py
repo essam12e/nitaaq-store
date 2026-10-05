@@ -73,6 +73,50 @@ def sales_change_finding(cmp: dict, ev: dict, *, finding_id: str = "f1", agent: 
     }
 
 
+def source_check_finding(checks: dict, ev: dict, cmp: dict, *, finding_id: str = "f_src", agent: str = "store_analytics",
+                         source_ar: str = "تقرير سلة") -> dict:
+    """Our totals against the platform's own sales report, with the gap explained (or said to be unexplained).
+
+    checks: {"current": metrics.reconcile_report(...), "baseline": ...}.
+    """
+    c, b = checks["current"], checks["baseline"]
+    pct = None
+    if b["reported"]:
+        pct = ((Decimal(str(c["reported"])) - Decimal(str(b["reported"]))) / Decimal(str(b["reported"])) * 100).quantize(Decimal("0.01"))
+    trend = "غير معروف" if pct is None else ("ارتفاع" if pct > 0 else "انخفاض" if pct < 0 else "بدون تغير")
+    interp = (f"{source_ar}: {_m(c['reported'])} مقابل {_m(b['reported'])}"
+              + (f" ({trend} {abs(pct)}%)." if pct is not None else ".")
+              + f" الفترة الحالية: {c['explanation_ar']} الفترة السابقة: {b['explanation_ar']}")
+    ours_dir = cmp.get("status")
+    src_dir = "increase" if pct is not None and pct > 0 else "decline" if pct is not None and pct < 0 else None
+    limitations = []
+    if src_dir and ours_dir in ("increase", "decline", "flat") and ours_dir != src_dir:
+        limitations.append(f"اتجاه {source_ar} يختلف عن حسابنا لأن التعريف مختلف؛ اختر التعريف اللي تتابعه وثبّته.")
+    if not (c["matches"] or c["explained_by"]) or not (b["matches"] or b["explained_by"]):
+        limitations.append(f"جزء من الفرق مع {source_ar} غير مفسَّر.")
+    calc = {"fn": "reconcile_report", "evidence": ev["evidence_id"], "statuses": cmp.get("statuses"),
+            "current": c["period"], "baseline": b["period"],
+            "reported_current": str(c["reported"]), "reported_baseline": str(b["reported"])}
+    return {
+        "finding_id": finding_id, "agent": agent, "store_id": ev["store_id"], "account_id": ev.get("account_id"),
+        "metric": "gmv", "entity": None,
+        "period": {"current": c["period"], "baseline": b["period"], "timezone": "Asia/Riyadh"},
+        "evidence_refs": [ev["evidence_id"]], "coverage_note_ar": coverage_note_ar(ev), "freshness": ev["fetched_at"],
+        "observed": [
+            {"label_ar": f"المبيعات حسب {source_ar}", "current": str(c["reported"]), "baseline": str(b["reported"]),
+             "change_pct": str(pct), "calc": {**calc, "field": "reported"}},
+            {"label_ar": f"الفرق بين حسابنا و{source_ar}", "current": str(c["gap"]), "baseline": str(b["gap"]),
+             "change_pct": None, "calc": {**calc, "field": "gap"}},
+        ],
+        "interpretation_ar": interp, "alternatives_ar": [],
+        "confidence": {"level": "high" if (c["matches"] or c["explained_by"]) and (b["matches"] or b["explained_by"]) else "medium",
+                       "rationale_ar": "الفرق محسوب حتمياً من الطلبات المحفوظة ومن أرقام التقرير كما وصلت."},
+        "priority": "medium", "proposed_action_ref": None,
+        "expected_effect": {"kind": "unknown", "range_ar": "هذا قياس لما حدث وليس توقعاً."},
+        "requires": None, "limitations_ar": limitations, "claims_cause": False, "comparison_status": cmp.get("status"),
+    }
+
+
 def where_finding(dec: dict, ev: dict, cmp: dict, *, finding_id: str = "f2", agent: str = "store_analytics",
                   top: int = 3) -> dict | None:
     """Finding for "where did the change happen?" from metrics.decompose()."""
@@ -81,7 +125,8 @@ def where_finding(dec: dict, ev: dict, cmp: dict, *, finding_id: str = "f2", age
         return None
     dim_ar = {"product": "المنتجات", "category": "التصنيفات", "city": "المدن", "payment_method": "طرق الدفع",
               "brand": "الماركات"}.get(dec["dimension"], dec["dimension"])
-    parts = [f"{r['value']} ({_m(r['change'])}، {r['share_of_change_pct']}% من التغير)" for r in rows]
+    parts = [f"{r['value']} ({_m(r['change'])}" + (f"، {r['share_of_change_pct']}% من التغير)" if r.get("share_of_change_pct") is not None else ")")
+             for r in rows]
     calc = {"fn": "decompose", "evidence": ev["evidence_id"], "current": cmp["current"]["period"],
             "baseline": cmp["baseline"]["period"], "dimension": dec["dimension"], "statuses": cmp.get("statuses")}
     return {
